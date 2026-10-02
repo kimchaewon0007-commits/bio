@@ -534,3 +534,4 @@ st.markdown(
 st.caption(
     "🌿 GREEN HABITAT · 생물다양성 교육용 시뮬레이션 | "
     "생물별 환경 적합성은 실제 개체수 예측이 아닌 단순화된 모델입니다."
+)
