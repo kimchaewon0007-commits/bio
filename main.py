@@ -3,7 +3,7 @@ import streamlit as st
 import math
 
 st.set_page_config(
-    page_title="GREEN HABITAT",
+    page_title="GREEN HABITAT", 
     page_icon="🌿",
     layout="wide",
 )
