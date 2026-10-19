@@ -1,4 +1,4 @@
-
+import streamlit as st
 import pandas as pd
 import plotly.express as px
 
@@ -7,7 +7,6 @@ st.set_page_config(
     page_icon="🌿",
     layout="wide"
 )
-
 st.title("🌍 국가별 생물다양성 탐험")
 st.write("국가별 서식 생물과 환경 조건에 따른 변화를 살펴보세요.")
 
