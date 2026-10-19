@@ -541,21 +541,24 @@ st.markdown(
 temperatures = list(range(-5, 41, 5))
 biodiversity_values = []
 
+
 for t in temperatures:
     test_score, _ = biodiversity_score(
         t,
         humidity,
-        water,
-        sunlight,
-        vegetation,
-        pollution
+        water
     )
     biodiversity_values.append(test_score)
 
-graph_data = pd.DataFrame({
+graph_data = {
     "온도 (℃)": temperatures,
     "생물다양성 지수": biodiversity_values
-})
+}
+
+import pandas as pd
+import plotly.express as px
+
+graph_data = pd.DataFrame(graph_data)
 
 fig = px.line(
     graph_data,
