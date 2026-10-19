@@ -530,6 +530,48 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+# -----------------------------
+# 환경 변화와 생물다양성 그래프
+# -----------------------------
+st.markdown(
+    '<div class="section-title">📊 환경 변화 그래프</div>',
+    unsafe_allow_html=True
+)
+
+temperatures = list(range(-5, 41, 5))
+biodiversity_values = []
+
+for t in temperatures:
+    test_score, _ = biodiversity_score(
+        t,
+        humidity,
+        water,
+        sunlight,
+        vegetation,
+        pollution
+    )
+    biodiversity_values.append(test_score)
+
+graph_data = pd.DataFrame({
+    "온도 (℃)": temperatures,
+    "생물다양성 지수": biodiversity_values
+})
+
+fig = px.line(
+    graph_data,
+    x="온도 (℃)",
+    y="생물다양성 지수",
+    markers=True,
+    title="온도에 따른 생물다양성 변화"
+)
+
+fig.update_layout(
+    plot_bgcolor="white",
+    paper_bgcolor="rgba(0,0,0,0)",
+    font_color="#245d31"
+)
+
+st.plotly_chart(fig, use_container_width=True)
 
 st.caption(
     "🌿 GREEN HABITAT · 생물다양성 교육용 시뮬레이션 | "
