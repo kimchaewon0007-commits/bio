@@ -2,3 +2,6 @@ streamlit>=1.37
 pandas>=2.0
 requests>=2.31
 pydeck>=0.9
+
+import plotly.express as px
+import pandas as pd
