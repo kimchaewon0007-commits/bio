@@ -2,29 +2,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-st.markdown("""
-
-<style>
-.stApp {
-    background: linear-gradient(180deg, #edf3df, #f6f2e7);
-}
-h1, h2, h3 {
-    color: #315b45;
-}
-div[data-testid="stMetric"] {
-    background: #ffffff;
-    border: 1px solid #d9e3c9;
-    border-radius: 12px;
-    padding: 15px;
-}
-div.stButton > button {
-    background: #587b57;
-    color: white;
-    border-radius: 10px;
-    border: none;
-}
-</style>
-""", unsafe_allow_html=True)
 
 st.set_page_config(
     page_title="국가별 생물다양성",
