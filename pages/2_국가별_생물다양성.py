@@ -1,4 +1,9 @@
-
+from style import (
+    apply_nature_theme,
+    show_falling_leaves,
+    show_nature_hero,
+    show_nature_section,
+)
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -8,8 +13,14 @@ st.set_page_config(
     page_icon="🌿",
     layout="wide"
 )
-st.title("🌍 국가별 생물다양성 탐험")
-st.write("국가별 서식 생물과 환경 조건에 따른 변화를 살펴보세요.")
+apply_nature_theme()
+show_falling_leaves()
+
+show_nature_hero(
+    "WORLD BIODIVERSITY · 02",
+    "🌍 국가별 생물다양성 탐험",
+    "각 나라에 서식하는 생물을 알아보고 환경 조건에 따른 차이를 탐험해 보세요."
+)
 
 # 국가별 생물 예시 데이터
 # 실제 전체 생물종 목록이 아닌 기능 확인용 자료
@@ -38,7 +49,7 @@ data = [
 
 df = pd.DataFrame(data)
 
-st.subheader("🌱 1. 탐험할 국가 선택")
+show_nature_section("🌱 1. 탐험할 국가 선택")
 
 countries = sorted(df["국가"].unique())
 
