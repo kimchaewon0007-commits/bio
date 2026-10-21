@@ -1,12 +1,12 @@
+import streamlit as st
+import random
+
 from style import (
     apply_nature_theme,
     show_falling_leaves,
     show_nature_hero,
     show_nature_section,
 )
-```python
-import streamlit as st
-import random
 
 st.set_page_config(
     page_title="생태 탐험",
@@ -16,38 +16,6 @@ st.set_page_config(
 
 apply_nature_theme()
 show_falling_leaves()
-
-# -------------------------
-# 자연 탐험 테마 디자인
-# -------------------------
-st.markdown("""
-<style>
-.stApp {
-    background: linear-gradient(180deg, #e9f5df 0%, #f7f6e9 100%);
-    color: #254b32;
-}
-h1, h2, h3 {
-    color: #245b3b !important;
-}
-div[data-testid="stMetric"] {
-    background: #ffffff;
-    border: 1px solid #d5e8ca;
-    padding: 18px;
-    border-radius: 16px;
-}
-div.stButton > button {
-    background: #39794d;
-    color: white;
-    border-radius: 12px;
-    border: none;
-}
-div.stButton > button:hover {
-    background: #285e3b;
-    color: white;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # -------------------------
 # 페이지 제목
 # -------------------------
@@ -61,6 +29,7 @@ st.info(
     "탐험할 국가와 서식지를 선택한 다음 생물을 관찰하면 "
     "각 생물의 특징과 생태 정보를 확인할 수 있어요."
 )
+
 st.info(
     "탐험 안내: 서식지를 선택한 뒤 생물을 눌러 "
     "이름과 생태적 특징을 확인할 수 있습니다."
