@@ -1,143 +1,30 @@
 import streamlit as st
 import math
 
+from style import (
+    apply_nature_theme,
+    show_falling_leaves,
+    show_nature_hero,
+    show_nature_section,
+)
+
 st.set_page_config(
     page_title="GREEN HABITAT", 
     page_icon="🌿",
     layout="wide",
 )
 
+apply_nature_theme()
+show_falling_leaves()
 # -----------------------------
 # 기본 설정
 # -----------------------------
-st.markdown("""
-<style>
-    .stApp {
-        background:
-            radial-gradient(circle at 15% 10%, rgba(177, 230, 167, 0.45), transparent 28%),
-            radial-gradient(circle at 90% 15%, rgba(120, 190, 120, 0.25), transparent 25%),
-            linear-gradient(135deg, #eef9e9 0%, #dff2d8 45%, #cde8c5 100%);
-        color: #183b24;
-    }
 
-    .main .block-container {
-        max-width: 1200px;
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-    }
-
-    .hero {
-        background: linear-gradient(135deg, #1d6b3a, #3f914d);
-        border-radius: 28px;
-        padding: 34px 38px;
-        color: white;
-        box-shadow: 0 14px 35px rgba(38, 94, 49, 0.20);
-        margin-bottom: 24px;
-    }
-
-    .hero h1 {
-        font-size: 44px;
-        margin: 0 0 8px 0;
-        font-weight: 800;
-    }
-
-    .hero p {
-        font-size: 17px;
-        margin: 0;
-        opacity: 0.92;
-    }
-
-    .section-title {
-        font-size: 25px;
-        font-weight: 800;
-        color: #1c5d32;
-        margin: 25px 0 12px 0;
-    }
-
-    .card {
-        background: rgba(255,255,255,0.78);
-        border: 1px solid rgba(57, 116, 64, 0.12);
-        border-radius: 22px;
-        padding: 20px;
-        box-shadow: 0 8px 22px rgba(38, 94, 49, 0.08);
-    }
-
-    .metric {
-        background: rgba(255,255,255,0.86);
-        border-radius: 20px;
-        padding: 18px;
-        text-align: center;
-        border: 1px solid rgba(57, 116, 64, 0.10);
-        min-height: 130px;
-    }
-
-    .metric-label {
-        color: #55735d;
-        font-size: 14px;
-        font-weight: 700;
-    }
-
-    .metric-value {
-        color: #1d6b3a;
-        font-size: 32px;
-        font-weight: 800;
-        margin-top: 8px;
-    }
-
-    .species {
-        background: rgba(255,255,255,0.82);
-        border-radius: 18px;
-        padding: 16px;
-        margin-bottom: 10px;
-        border-left: 6px solid #4d9a54;
-    }
-
-    .species-name {
-        font-size: 18px;
-        font-weight: 800;
-        color: #245d31;
-    }
-
-    .species-desc {
-        color: #5a705f;
-        font-size: 13px;
-        margin-top: 4px;
-    }
-
-    .good {
-        color: #24733c;
-        font-weight: 800;
-    }
-
-    .warn {
-        color: #a56a18;
-        font-weight: 800;
-    }
-
-    .low {
-        color: #a64040;
-        font-weight: 800;
-    }
-
-    div[data-testid="stSlider"] {
-        padding-bottom: 8px;
-    }
-
-    .stButton > button {
-        border-radius: 14px;
-        border: 0;
-        background: #2f7d3d;
-        color: white;
-        font-weight: 700;
-    }
-
-    .stButton > button:hover {
-        background: #246632;
-        color: white;
-    }
-</style>
-""", unsafe_allow_html=True)
-
+show_nature_hero(
+    "BIODIVERSITY LAB · 01",
+    "🌿 GREEN HABITAT",
+    "환경을 조절하고 생물다양성의 변화를 직접 실험해 보세요."
+)
 
 # -----------------------------
 # 생물 데이터
