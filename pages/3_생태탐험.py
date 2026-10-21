@@ -1,3 +1,9 @@
+from style import (
+    apply_nature_theme,
+    show_falling_leaves,
+    show_nature_hero,
+    show_nature_section,
+)
 ```python
 import streamlit as st
 import random
@@ -7,6 +13,9 @@ st.set_page_config(
     page_icon="🌿",
     layout="wide"
 )
+
+apply_nature_theme()
+show_falling_leaves()
 
 # -------------------------
 # 자연 탐험 테마 디자인
@@ -42,9 +51,16 @@ div.stButton > button:hover {
 # -------------------------
 # 페이지 제목
 # -------------------------
-st.title("🌿 생태 탐험")
-st.write("국가와 서식지를 선택하고 그곳에 사는 생물을 탐험해 보세요.")
+show_nature_hero(
+    "FIELD EXPLORATION · 03",
+    "🌿 생태 탐험",
+    "나라와 서식지를 선택하고 그곳에 살아가는 생물들의 세계를 탐험해 보세요."
+)
 
+st.info(
+    "탐험할 국가와 서식지를 선택한 다음 생물을 관찰하면 "
+    "각 생물의 특징과 생태 정보를 확인할 수 있어요."
+)
 st.info(
     "탐험 안내: 서식지를 선택한 뒤 생물을 눌러 "
     "이름과 생태적 특징을 확인할 수 있습니다."
