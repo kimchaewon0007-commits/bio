@@ -341,6 +341,9 @@ function setMessage(text) {
     bottomMessage.textContent = text;
 }
 
+// ================================================
+// 동물 움직임과 낮/밤 활동 표시
+// ================================================
 
 function updateCreatures(delta) {
     elapsed += delta;
@@ -348,31 +351,31 @@ function updateCreatures(delta) {
     animatedCreatures.forEach((group) => {
         const data = group.userData;
 
-        if (!data.species) return;
+        if (!data.species) {
+            return;
+        }
 
         const active = data.species.activity;
 
-        // 식물과 균류는 낮과 밤에 모두 보이도록 합니다.
+        // 식물과 균류는 낮과 밤에 모두 표시
         if (data.plant) {
             group.visible = true;
             group.position.y = 0;
             return;
         }
 
-        // 낮에는 야행성 생물을 숨기고,
-        // 밤에는 주행성 생물을 숨깁니다.
-        const activityMatches =
-            isNight
-                ? active !== "day"
-                : active !== "night";
+        // 새벽 활동 생물은 낮과 밤 모두 관찰 가능하게 처리
+        const isActiveNow = isNight
+            ? active === "night" || active === "dawn"
+            : active !== "night";
 
-        group.visible = activityMatches;
+        group.visible = isActiveNow;
 
-        if (!group.visible) {
+        if (!isActiveNow) {
             return;
         }
 
-        // 동물이 제자리에서 조금씩 움직이도록 합니다.
+        // 동물이 주변을 자연스럽게 이동
         if (data.walking) {
             const speed = active === "night" ? 0.22 : 0.12;
 
@@ -388,7 +391,7 @@ function updateCreatures(delta) {
                 Math.sin(elapsed + data.phase) * delta * 0.15;
         }
 
-        // 생물이 자연스럽게 위아래로 움직이도록 합니다.
+        // 동물의 미세한 움직임
         group.position.y = Math.max(
             0,
             Math.sin(elapsed * 3 + data.phase) * 0.035
