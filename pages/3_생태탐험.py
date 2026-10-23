@@ -1,5 +1,7 @@
 import streamlit as st
 import random
+from pathlib import Path
+import streamlit.components.v1 as components
 
 from style import (
     apply_nature_theme,
@@ -277,86 +279,85 @@ habitat_data = {
 place = habitat_data[(country, habitat)]
 
 # -------------------------
-# 탐험 장면
 # -------------------------
+# 3D 생태 탐험 화면
+# -------------------------
+
 st.markdown("---")
+
 st.subheader(f"{place['emoji']} {country} · {habitat}")
 
-st.markdown(
-    f"""
-    <div style="
-        background: {place['background']};
-        border-radius: 24px;
-        padding: 32px;
-        min-height: 180px;
-        border: 1px solid #cbdcc1;
-        text-align: center;
-    ">
-        <div style="font-size: 64px;">{place['emoji']}</div>
-        <h2 style="color:#245b3b;">생태 탐험 구역</h2>
-        <p style="font-size:18px;">{place['description']}</p>
-    </div>
-    """,
-    unsafe_allow_html=True
+st.write(
+    "3D 자연 공간을 직접 탐험하며 "
+    "주변 생물을 관찰해 보세요."
 )
 
-st.write("")
-st.subheader("👣 주변 생물 탐색")
-st.write("아래 생물을 선택해 이 서식지에 사는 생물을 알아보세요.")
+# 프로젝트 최상위 폴더의 explorer 폴더 경로
+explorer_dir = Path(__file__).resolve().parent.parent / "explorer"
 
-# -------------------------
-# 생물 선택 및 상세 정보
-# -------------------------
-columns = st.columns(len(place["species"]))
+# 3D 화면에 필요한 파일 읽기
+html_path = explorer_dir / "index.html"
+css_path = explorer_dir / "style.css"
+js_path = explorer_dir / "game.js"
 
-for index, species in enumerate(place["species"]):
-    with columns[index]:
-        st.markdown(
-            f"""
-            <div style="
-                background: white;
-                padding: 18px;
-                border-radius: 18px;
-                text-align: center;
-                border: 1px solid #d5e8ca;
-                min-height: 130px;
-            ">
-                <div style="font-size:42px;">{species['emoji']}</div>
-                <strong>{species['name']}</strong>
-                <p>{species['type']}</p>
-            </div>
-            """,
-            unsafe_allow_html=True
+# 파일이 모두 있는지 확인
+missing_files = []
+
+if not html_path.exists():
+    missing_files.append("explorer/index.html")
+
+if not css_path.exists():
+    missing_files.append("explorer/style.css")
+
+if not js_path.exists():
+    missing_files.append("explorer/game.js")
+
+if missing_files:
+    st.error("다음 파일을 찾을 수 없습니다.")
+
+    for file_name in missing_files:
+        st.write(f"- {file_name}")
+
+else:
+    # HTML, CSS, JavaScript 읽기
+    html_content = html_path.read_text(encoding="utf-8")
+    css_content = css_path.read_text(encoding="utf-8")
+    js_content = js_path.read_text(encoding="utf-8")
+
+    # CSS 파일을 HTML 안에 직접 삽입
+    html_content = html_content.replace(
+        '<link rel="stylesheet" href="./style.css">',
+        "<style>\n" + css_content + "\n</style>"
+    )
+
+    # JavaScript 파일을 HTML 안에 직접 삽입
+    html_content = html_content.replace(
+        '<script type="module" src="./game.js"></script>',
+        '<script type="module">\n'
+        + js_content
+        + '\n</script>'
+    )
+
+    # HTML 안에 외부 파일 경로가 남아 있는지 확인
+    if (
+        '<link rel="stylesheet" href="./style.css">' in html_content
+        or '<script type="module" src="./game.js"></script>' in html_content
+    ):
+        st.error(
+            "HTML에서 CSS 또는 JavaScript 파일을 연결하는 부분을 "
+            "찾지 못했습니다. index.html의 파일 경로를 확인해 주세요."
         )
-
-        if st.button(
-            f"{species['name']} 관찰하기",
-            key=f"observe_{country}_{habitat}_{index}"
-        ):
-            st.session_state["observed_species"] = species
-            st.session_state["observed_location"] = (country, habitat)
-
-# 국가나 서식지를 바꿨다면 이전 선택 정보는 표시하지 않음
-if st.session_state.get("observed_location") == (country, habitat):
-    selected_species = st.session_state.get("observed_species")
-
-    if selected_species:
-        st.markdown("---")
-        st.subheader(
-            f"{selected_species['emoji']} 관찰 기록: {selected_species['name']}"
+    else:
+        # Streamlit 화면 안에 3D 탐험 화면 표시
+        components.html(
+            html_content,
+            height=780,
+            scrolling=False
         )
-        st.write(f"**분류:** {selected_species['type']}")
-        st.write(f"**생태 정보:** {selected_species['desc']}")
-
-        if st.button("관찰 기록 닫기"):
-            st.session_state.pop("observed_species", None)
-            st.session_state.pop("observed_location", None)
-            st.rerun()
 
 st.markdown("---")
-st.caption(
-    "교육용 생태 탐험 시뮬레이션입니다. "
-    "표시되는 생물은 선택된 서식지를 설명하기 위한 예시이며, "
-    "실제 현장에서 해당 생물을 관찰할 수 있다는 뜻은 아닙니다."
-)
 
+st.caption(
+    "교육용 3D 생태 탐험입니다. "
+    "화면의 생물 모형은 생태계를 이해하기 위한 시각 자료입니다."
+)
