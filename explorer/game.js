@@ -341,14 +341,61 @@ function setMessage(text) {
     bottomMessage.textContent = text;
 }
 
-function updateSeasonInfo() {
-    seasonInfo.innerHTML = `
-        <strong>${currentCountry} · ${currentHabitat} · ${currentSeason}</strong>
-        <div style="margin-top:6px">${seasonColors[currentSeason].description}</div>
-        <div style="margin-top:6px">현재 시간: ${isNight ? "밤" : "낮"}</div>
-        <div>이 환경의 생물 예시는 실제 분포를 참고한 교육용 모형입니다.</div>
-    `;
+
+function updateCreatures(delta) {
+    elapsed += delta;
+
+    animatedCreatures.forEach((group) => {
+        const data = group.userData;
+
+        if (!data.species) return;
+
+        const active = data.species.activity;
+
+        // 식물과 균류는 낮과 밤에 모두 보이도록 합니다.
+        if (data.plant) {
+            group.visible = true;
+            group.position.y = 0;
+            return;
+        }
+
+        // 낮에는 야행성 생물을 숨기고,
+        // 밤에는 주행성 생물을 숨깁니다.
+        const activityMatches =
+            isNight
+                ? active !== "day"
+                : active !== "night";
+
+        group.visible = activityMatches;
+
+        if (!group.visible) {
+            return;
+        }
+
+        // 동물이 제자리에서 조금씩 움직이도록 합니다.
+        if (data.walking) {
+            const speed = active === "night" ? 0.22 : 0.12;
+
+            group.position.x =
+                data.baseX +
+                Math.sin(elapsed * speed + data.phase) * 0.8;
+
+            group.position.z =
+                data.baseZ +
+                Math.cos(elapsed * speed + data.phase) * 0.45;
+
+            group.rotation.y +=
+                Math.sin(elapsed + data.phase) * delta * 0.15;
+        }
+
+        // 생물이 자연스럽게 위아래로 움직이도록 합니다.
+        group.position.y = Math.max(
+            0,
+            Math.sin(elapsed * 3 + data.phase) * 0.035
+        );
+    });
 }
+
 
 function applyTime() {
     if (isNight) {
