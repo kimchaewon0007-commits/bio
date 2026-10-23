@@ -872,10 +872,22 @@ function updateCreatures(delta) {
             (isNight && active === "night") ||
             (!isNight && active !== "night");
 
-        group.visible = true;
+       if (data.plant) {
+    group.visible = true;
+    return;
+}
 
-        if (data.plant) return;
+const active = data.species.activity;
 
+// 낮에는 야행성 생물을 숨기고,
+// 밤에는 주행성 생물을 숨긴다.
+group.visible = isNight
+    ? active !== "day"
+    : active !== "night";
+
+if (!group.visible) {
+    return;
+}
         if (data.walking && activityMatches) {
             const speed = active === "night" ? 0.22 : 0.12;
             group.position.x = data.baseX + Math.sin(elapsed * speed + data.phase) * 0.8;
