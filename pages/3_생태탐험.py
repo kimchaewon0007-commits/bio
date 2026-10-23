@@ -325,31 +325,32 @@ else:
     css_content = css_path.read_text(encoding="utf-8")
     js_content = js_path.read_text(encoding="utf-8")
 
+   
     # CSS 파일을 HTML 안에 직접 삽입
     html_content = html_content.replace(
         '<link rel="stylesheet" href="./style.css">',
         "<style>\n" + css_content + "\n</style>"
     )
 
-# Streamlit에서 선택한 국가와 서식지를 JavaScript로 전달
-config_json = json.dumps(
-    {
-        "country": country,
-        "habitat": habitat,
-    },
-    ensure_ascii=False
-)
+    # Streamlit에서 선택한 국가와 서식지를 JavaScript로 전달
+    config_json = json.dumps(
+        {
+            "country": country,
+            "habitat": habitat,
+        },
+        ensure_ascii=False
+    )
 
-# 국가 및 서식지 설정과 JavaScript를 HTML 안에 삽입
-html_content = html_content.replace(
-    '<script type="module" src="./game.js"></script>',
-    '<script>window.BIOMAP_CONFIG = '
-    + config_json
-    + ';</script>\n'
-    + '<script type="module">\n'
-    + js_content
-    + '\n</script>'
-)
+    # 국가 및 서식지 설정과 JavaScript를 HTML 안에 삽입
+    html_content = html_content.replace(
+        '<script type="module" src="./game.js"></script>',
+        '<script>window.BIOMAP_CONFIG = '
+        + config_json
+        + ';</script>\n'
+        + '<script type="module">\n'
+        + js_content
+        + '\n</script>'
+    )
 
     # HTML 안에 외부 파일 경로가 남아 있는지 확인
     if (
@@ -367,6 +368,7 @@ html_content = html_content.replace(
             height=780,
             scrolling=False
         )
+
 
 st.markdown("---")
 
