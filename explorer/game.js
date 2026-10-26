@@ -1204,6 +1204,8 @@ function makeCreature(species, x, z, index) {
     world.add(group);
     animatedCreatures.push(group);
     scenery.push(group);
+
+    return group;
 }
 
 // ================================================
