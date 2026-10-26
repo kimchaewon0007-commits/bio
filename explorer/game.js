@@ -1249,50 +1249,6 @@ function updateMovement(delta) {
     camera.position.y = 1.7;
 }
 
-// ================================================
-// 동물 움직임과 낮/밤 활동 표시
-// ================================================
-
-function updateCreatures(delta) {
-    elapsed += delta;
-
-    animatedCreatures.forEach((group) => {
-        const data = group.userData;
-        if (!data.species) return;
-
-        const active = data.species.activity;
-        const activityMatches =
-            (isNight && active === "night") ||
-            (!isNight && active !== "night");
-
-       if (data.plant) {
-    group.visible = true;
-    return;
-}
-
-const active = data.species.activity;
-
-// 낮에는 야행성 생물을 숨기고,
-// 밤에는 주행성 생물을 숨긴다.
-group.visible = isNight
-    ? active !== "day"
-    : active !== "night";
-
-if (!group.visible) {
-    return;
-}
-        if (data.walking && activityMatches) {
-            const speed = active === "night" ? 0.22 : 0.12;
-            group.position.x = data.baseX + Math.sin(elapsed * speed + data.phase) * 0.8;
-            group.position.z = data.baseZ + Math.cos(elapsed * speed + data.phase) * 0.45;
-            group.rotation.y += Math.sin(elapsed + data.phase) * delta * 0.15;
-        }
-
-        group.position.y = data.plant
-            ? 0
-            : Math.max(0, Math.sin(elapsed * 3 + data.phase) * 0.035);
-    });
-}
 
 // ================================================
 // 시작 및 화면 크기
