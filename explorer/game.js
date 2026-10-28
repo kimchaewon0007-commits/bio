@@ -26,6 +26,18 @@ const animatedCreatures = [];
 const scenery = [];
 const keys = Object.create(null);
 
+// ================================================
+// 코인 및 탐험 미션 상태
+// ================================================
+
+let coinBalance = 0;
+let questRewardClaimed = false;
+
+const coinObjects = [];
+const QUEST_TARGET = 5;
+const SPECIES_DISCOVERY_REWARD = 10;
+const QUEST_COMPLETION_REWARD = 30;
+
 // HTML 요소
 const container = document.getElementById("game-container");
 const introPanel = document.getElementById("intro-panel");
@@ -42,6 +54,12 @@ const bottomMessage = document.getElementById("bottom-message");
 const timeToggle = document.getElementById("time-toggle");
 const timeLabel = document.getElementById("time-label");
 const seasonSelect = document.getElementById("season-select");
+// 코인 및 탐험 목표 HTML 요소
+const coinCountElement = document.getElementById("coin-count");
+const questDescription = document.getElementById("quest-description");
+const questProgressBar = document.getElementById("quest-progress-bar");
+const questProgressText = document.getElementById("quest-progress-text");
+const questRewardText = document.getElementById("quest-reward");
 
 // 서식지 데이터
 // 각 생물 데이터: 이름, 이모지, 분류, 설명, 활동 시간
@@ -371,6 +389,58 @@ function setMessage(message) {
         bottomMessage.textContent = message;
     }
 }
+// ================================================
+// 코인 표시 및 탐험 목표 갱신
+// ================================================
+
+function updateCoinDisplay() {
+    if (coinCountElement) {
+        coinCountElement.textContent = String(coinBalance);
+    }
+}
+
+function updateQuestDisplay() {
+    const progress = Math.min(discovered.size, QUEST_TARGET);
+    const percentage = (progress / QUEST_TARGET) * 100;
+
+    if (questProgressBar) {
+        questProgressBar.style.width = `${percentage}%`;
+    }
+
+    if (questProgressText) {
+        questProgressText.textContent =
+            `${progress} / ${QUEST_TARGET}종 발견`;
+    }
+
+    if (discovered.size >= QUEST_TARGET) {
+        if (questDescription) {
+            questDescription.textContent =
+                "목표 달성! 다양한 생물을 발견했어요.";
+        }
+
+        if (questRewardText) {
+            questRewardText.textContent =
+                questRewardClaimed
+                    ? "완료한 미션"
+                    : `보상: 코인 ${QUEST_COMPLETION_REWARD}개`;
+        }
+    } else {
+        if (questDescription) {
+            questDescription.textContent =
+                `새로운 생물을 ${QUEST_TARGET}종 발견해 보세요!`;
+        }
+
+        if (questRewardText) {
+            questRewardText.textContent =
+                `보상: 코인 ${QUEST_COMPLETION_REWARD}개`;
+        }
+    }
+}
+
+function addCoins(amount) {
+    coinBalance += amount;
+    updateCoinDisplay();
+}
 
 function makeMaterial(color, roughness = 0.9) {
     return new THREE.MeshStandardMaterial({ color, roughness });
@@ -468,6 +538,64 @@ function makeFlower(x, z, index) {
     group.position.set(x, 0, z);
     world.add(group);
     scenery.push(group);
+}
+
+// ================================================
+// 바닥에 놓이는 수집용 코인
+// ================================================
+
+function makeCoin(x, z, index) {
+    const coinGroup = new THREE.Group();
+
+    const coinMaterial = new THREE.MeshStandardMaterial({
+        color: "#ffd84d",
+        metalness: 0.75,
+        roughness: 0.25,
+        emissive: "#8f6410",
+        emissiveIntensity: 0.35
+    });
+
+    const coinEdgeMaterial = new THREE.MeshStandardMaterial({
+        color: "#c58a16",
+        metalness: 0.8,
+        roughness: 0.3
+    });
+
+    const coinBody = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.34, 0.34, 0.09, 24),
+        coinEdgeMaterial
+    );
+
+    coinBody.rotation.x = Math.PI / 2;
+    coinBody.castShadow = true;
+    coinGroup.add(coinBody);
+
+    const coinFace = new THREE.Mesh(
+        new THREE.CircleGeometry(0.27, 24),
+        coinMaterial
+    );
+
+    coinFace.position.z = 0.052;
+    coinGroup.add(coinFace);
+
+    const coinBack = new THREE.Mesh(
+        new THREE.CircleGeometry(0.27, 24),
+        coinMaterial
+    );
+
+    coinBack.position.z = -0.052;
+    coinBack.rotation.y = Math.PI;
+    coinGroup.add(coinBack);
+
+    coinGroup.position.set(x, 0.85, z);
+    coinGroup.rotation.y = index * 0.7;
+
+    coinGroup.userData.baseY = 0.85;
+    coinGroup.userData.phase = index * 1.37;
+    coinGroup.userData.collected = false;
+
+    world.add(coinGroup);
+    coinObjects.push(coinGroup);
 }
 
 // ================================================
@@ -1238,6 +1366,7 @@ function clearWorld() {
     interactable.length = 0;
     animatedCreatures.length = 0;
     scenery.length = 0;
+    coinObjects.length = 0;
 }
 
 function rebuildEnvironment() {
@@ -1341,8 +1470,30 @@ function rebuildEnvironment() {
         }
     }
 
+ // 숲 곳곳에 수집용 코인 배치
+    for (let i = 0; i < 18; i++) {
+        let x;
+        let z;
+        let attempts = 0;
+
+        do {
+            x = (Math.random() - 0.5) * 44;
+            z = (Math.random() - 0.5) * 44;
+            attempts++;
+        } while (
+            attempts < 40 &&
+            Math.abs(x) < 5 &&
+            z > 2 &&
+            z < 13
+        );
+
+        makeCoin(x, z, i);
+    }
+
     updateSeasonInfo();
     applyTime();
+    updateCoinDisplay();
+    updateQuestDisplay();
 }
 
 // ================================================
@@ -1516,6 +1667,51 @@ function updateMovement(delta) {
     camera.position.x = THREE.MathUtils.clamp(camera.position.x, -48, 48);
     camera.position.z = THREE.MathUtils.clamp(camera.position.z, -48, 48);
     camera.position.y = 1.7;
+    
+    collectNearbyCoins();
+}
+
+// ================================================
+// 플레이어 주변의 코인 수집
+// ================================================
+
+function collectNearbyCoins() {
+    for (let i = coinObjects.length - 1; i >= 0; i--) {
+        const coin = coinObjects[i];
+
+        if (!coin || coin.userData.collected) {
+            continue;
+        }
+
+        const dx = camera.position.x - coin.position.x;
+        const dz = camera.position.z - coin.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+
+        if (distance < 1.5) {
+            coin.userData.collected = true;
+            world.remove(coin);
+
+            coin.traverse((object) => {
+                if (object.geometry) {
+                    object.geometry.dispose();
+                }
+
+                if (object.material) {
+                    const materials = Array.isArray(object.material)
+                        ? object.material
+                        : [object.material];
+
+                    materials.forEach((material) => {
+                        material.dispose();
+                    });
+                }
+            });
+
+            coinObjects.splice(i, 1);
+            addCoins(1);
+            setMessage("🪙 코인 1개를 획득했어요!");
+        }
+    }
 }
 
 // ================================================
