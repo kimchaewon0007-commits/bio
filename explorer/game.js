@@ -1503,9 +1503,17 @@ function rebuildEnvironment() {
 function showSpeciesInfo(species) {
     if (!species) return;
 
-    if (speciesEmoji) speciesEmoji.textContent = species.emoji;
-    if (speciesName) speciesName.textContent = species.name;
-    if (speciesType) speciesType.textContent = species.type;
+    if (speciesEmoji) {
+        speciesEmoji.textContent = species.emoji;
+    }
+
+    if (speciesName) {
+        speciesName.textContent = species.name;
+    }
+
+    if (speciesType) {
+        speciesType.textContent = species.type;
+    }
 
     const activityText = {
         day: "주로 낮에 활동하는 생물입니다.",
@@ -1528,9 +1536,30 @@ function showSpeciesInfo(species) {
         if (discoveryCount) {
             discoveryCount.textContent = String(discovered.size);
         }
+
+        addCoins(SPECIES_DISCOVERY_REWARD);
+
+        setMessage(
+            `새로운 생물 ${species.name} 발견! 코인 ${SPECIES_DISCOVERY_REWARD}개를 획득했어요.`
+        );
+
+        if (
+            discovered.size >= QUEST_TARGET &&
+            !questRewardClaimed
+        ) {
+            questRewardClaimed = true;
+
+            addCoins(QUEST_COMPLETION_REWARD);
+
+            setMessage(
+                `🎉 탐험 목표 달성! 추가 코인 ${QUEST_COMPLETION_REWARD}개를 획득했어요!`
+            );
+        }
+    } else {
+        setMessage(`${species.name} 관찰 기록을 열었어요.`);
     }
 
-    setMessage(`${species.name} 관찰 기록을 열었어요.`);
+    updateQuestDisplay();
 }
 
 if (closeSpeciesButton) {
@@ -1911,12 +1940,25 @@ function animate() {
     updateMovement(delta);
     updateCreatures(delta);
 
+    // 코인을 공중에서 천천히 회전시키기
+    coinObjects.forEach((coin) => {
+        if (coin.userData.collected) return;
+
+        coin.rotation.y += delta * 1.8;
+
+        coin.position.y =
+            coin.userData.baseY +
+            Math.sin(elapsed * 2 + coin.userData.phase) * 0.12;
+    });
+
     renderer.render(scene, camera);
 }
 
 // 최초 실행
 rebuildEnvironment();
 applyTime();
+updateCoinDisplay();
+updateQuestDisplay();
 animate();
 
 console.log("BIOMAP EXPLORER: 3D 생태 탐험이 시작되었습니다.");
