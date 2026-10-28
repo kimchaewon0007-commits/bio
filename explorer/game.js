@@ -21,6 +21,8 @@ let previousMouseX = 0;
 let previousMouseY = 0;
 
 const discovered = new Set();
+    JSON.parse(localStorage.getItem("biomapDiscoveredSpecies") || "[]")
+);
 const interactable = [];
 const animatedCreatures = [];
 const scenery = [];
@@ -30,8 +32,14 @@ const keys = Object.create(null);
 // 코인 및 탐험 미션 상태
 // ================================================
 
-let coinBalance = 0;
-let questRewardClaimed = false;
+let coinBalance = Math.max(
+    0,
+    Number(localStorage.getItem("biomapCoinBalance")) || 0
+);
+
+let questRewardClaimed =
+    localStorage.getItem("biomapQuestRewardClaimed") === "true";
+
 
 const coinObjects = [];
 const QUEST_TARGET = 5;
@@ -439,6 +447,12 @@ function updateQuestDisplay() {
 
 function addCoins(amount) {
     coinBalance += amount;
+    
+        localStorage.setItem(
+        "biomapCoinBalance",
+        String(coinBalance)
+    );
+    
     updateCoinDisplay();
 }
 
@@ -547,49 +561,101 @@ function makeFlower(x, z, index) {
 function makeCoin(x, z, index) {
     const coinGroup = new THREE.Group();
 
+    // 금색 금속 재질
     const coinMaterial = new THREE.MeshStandardMaterial({
         color: "#ffd84d",
-        metalness: 0.75,
-        roughness: 0.25,
-        emissive: "#8f6410",
-        emissiveIntensity: 0.35
+        metalness: 1.0,
+        roughness: 0.16,
+        emissive: "#b8860b",
+        emissiveIntensity: 0.22
     });
 
+    // 코인 테두리 재질
     const coinEdgeMaterial = new THREE.MeshStandardMaterial({
-        color: "#c58a16",
-        metalness: 0.8,
-        roughness: 0.3
+        color: "#d99b16",
+        metalness: 1.0,
+        roughness: 0.2
     });
 
+    // 코인 몸통
     const coinBody = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.34, 0.34, 0.09, 24),
+        new THREE.CylinderGeometry(0.34, 0.34, 0.09, 48),
         coinEdgeMaterial
     );
 
     coinBody.rotation.x = Math.PI / 2;
     coinBody.castShadow = true;
+    coinBody.receiveShadow = true;
     coinGroup.add(coinBody);
 
+    // 가운데 C 글자 텍스처 만들기
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 256;
+
+    const ctx = canvas.getContext("2d");
+
+    // 글자 주변에 은은한 금색 빛 효과
+    ctx.shadowColor = "#fff4a3";
+    ctx.shadowBlur = 18;
+
+    // C 글자 외곽
+    ctx.font = "bold 174px Georgia";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = "#fff0a0";
+    ctx.strokeText("C", 128, 128);
+
+    // C 글자 내부
+    const goldGradient = ctx.createLinearGradient(70, 35, 190, 220);
+    goldGradient.addColorStop(0, "#fff8bd");
+    goldGradient.addColorStop(0.35, "#ffffff");
+    goldGradient.addColorStop(0.65, "#fff0a0");
+    goldGradient.addColorStop(1, "#9b5b00");
+
+    ctx.fillStyle = goldGradient;
+    ctx.fillText("C", 128, 128);
+
+    const coinTexture = new THREE.CanvasTexture(canvas);
+    coinTexture.colorSpace = THREE.SRGBColorSpace;
+
+    // 코인 앞면
+    const coinFaceMaterial = new THREE.MeshStandardMaterial({
+        color: "#ffd84d",
+        map: coinTexture,
+        metalness: 0.85,
+        roughness: 0.18,
+        emissive: "#5e4000",
+        emissiveIntensity: 0.12
+    });
+
     const coinFace = new THREE.Mesh(
-        new THREE.CircleGeometry(0.27, 24),
-        coinMaterial
+        new THREE.CircleGeometry(0.27, 48),
+        coinFaceMaterial
     );
 
     coinFace.position.z = 0.052;
+    coinFace.castShadow = true;
     coinGroup.add(coinFace);
 
+    // 코인 뒷면
     const coinBack = new THREE.Mesh(
-        new THREE.CircleGeometry(0.27, 24),
-        coinMaterial
+        new THREE.CircleGeometry(0.27, 48),
+        coinFaceMaterial
     );
 
     coinBack.position.z = -0.052;
     coinBack.rotation.y = Math.PI;
+    coinBack.castShadow = true;
     coinGroup.add(coinBack);
 
+    // 코인 위치와 회전
     coinGroup.position.set(x, 0.85, z);
     coinGroup.rotation.y = index * 0.7;
 
+    // 공중에서 떠오르는 애니메이션에 필요한 값
     coinGroup.userData.baseY = 0.85;
     coinGroup.userData.phase = index * 1.37;
     coinGroup.userData.collected = false;
@@ -597,7 +663,6 @@ function makeCoin(x, z, index) {
     world.add(coinGroup);
     coinObjects.push(coinGroup);
 }
-
 // ================================================
 // 생물 모형
 // ================================================
@@ -1533,6 +1598,11 @@ function showSpeciesInfo(species) {
     if (!discovered.has(species.name)) {
         discovered.add(species.name);
 
+        localStorage.setItem(
+            "biomapDiscoveredSpecies",
+            JSON.stringify([...discovered])
+        );
+
         if (discoveryCount) {
             discoveryCount.textContent = String(discovered.size);
         }
@@ -1548,6 +1618,11 @@ function showSpeciesInfo(species) {
             !questRewardClaimed
         ) {
             questRewardClaimed = true;
+
+            localStorage.setItem(
+                "biomapQuestRewardClaimed",
+                "true"
+            );
 
             addCoins(QUEST_COMPLETION_REWARD);
 
