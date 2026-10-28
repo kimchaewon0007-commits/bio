@@ -20,9 +20,10 @@ let dragMoved = false;
 let previousMouseX = 0;
 let previousMouseY = 0;
 
-const discovered = new Set();
+const discovered = new Set(
     JSON.parse(localStorage.getItem("biomapDiscoveredSpecies") || "[]")
 );
+
 const interactable = [];
 const animatedCreatures = [];
 const scenery = [];
