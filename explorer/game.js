@@ -1507,10 +1507,10 @@ function rebuildEnvironment() {
     groundMaterial.color.set(seasonColors[currentSeason].ground);
     groundMaterial.color.lerp(new THREE.Color(habitat.ground), 0.55);
 
-    // 3000 크기의 넓은 탐험 공간에 나무 배치
-    for (let i = 0; i < 12000; i++) {
-        const x = (Math.random() - 0.5) * 2900;
-        const z = (Math.random() - 0.5) * 2900;
+    // 탐험 공간에 촘촘한 숲 조성
+    for (let i = 0; i < 1800; i++) {
+        const x = (Math.random() - 0.5) * 300;
+        const z = (Math.random() - 0.5) * 300;
 
         if (Math.abs(x) < 4 && z > -8 && z < 12) continue;
 
@@ -1537,12 +1537,12 @@ function rebuildEnvironment() {
 
         const isInsect = type === "곤충";
 
-        // 시작 위치 주변에 다양한 생물 배치
+        // 생물 종류에 따라 촘촘하게 여러 개체 생성
         const count = isPlant
-            ? 30
+            ? 45
             : isInsect
-                ? 40
-                : 35;
+                ? 60
+                : 50;
 
         for (let copy = 0; copy < count; copy++) {
             let x;
@@ -1550,8 +1550,8 @@ function rebuildEnvironment() {
             let attempts = 0;
 
             do {
-                x = (Math.random() - 0.5) * 300;
-                z = (Math.random() - 0.5) * 300;
+                x = (Math.random() - 0.5) * 180;
+                z = (Math.random() - 0.5) * 180;
                 attempts++;
             } while (
                 attempts < 30 &&
@@ -1579,10 +1579,10 @@ function rebuildEnvironment() {
         }
     });
 
-    // 넓은 탐험 공간에 꽃과 작은 식물 배치
-    for (let i = 0; i < 10000; i++) {
-        const x = (Math.random() - 0.5) * 2900;
-        const z = (Math.random() - 0.5) * 2900;
+    // 탐험 공간에 꽃과 작은 식물을 촘촘하게 배치
+    for (let i = 0; i < 1800; i++) {
+        const x = (Math.random() - 0.5) * 180;
+        const z = (Math.random() - 0.5) * 180;
 
         if (seasonColors[currentSeason].flower && Math.random() > 0.4) {
             makeFlower(x, z, i);
