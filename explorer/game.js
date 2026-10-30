@@ -562,95 +562,148 @@ function makeFlower(x, z, index) {
 function makeCoin(x, z, index) {
     const coinGroup = new THREE.Group();
 
-    // 금색 금속 재질
+    // 밝은 금색 코인 재질
     const coinMaterial = new THREE.MeshStandardMaterial({
-        color: "#ffd84d",
-        metalness: 1.0,
-        roughness: 0.16,
-        emissive: "#b8860b",
-        emissiveIntensity: 0.22
+        color: "#FFD770",
+        metalness: 0.55,
+        roughness: 0.22,
+        emissive: "#FFD770",
+        emissiveIntensity: 0.3
     });
 
-    // 코인 테두리 재질
+    // 밝은 금색 테두리 재질
     const coinEdgeMaterial = new THREE.MeshStandardMaterial({
-        color: "#d99b16",
-        metalness: 1.0,
-        roughness: 0.2
+        color: "#FFD770",
+        metalness: 0.65,
+        roughness: 0.2,
+        emissive: "#EAB94E",
+        emissiveIntensity: 0.2
     });
 
     // 코인 몸통
     const coinBody = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.34, 0.34, 0.09, 48),
+        new THREE.CylinderGeometry(0.36, 0.36, 0.1, 64),
         coinEdgeMaterial
     );
 
     coinBody.rotation.x = Math.PI / 2;
     coinBody.castShadow = true;
-    coinBody.receiveShadow = true;
+    coinBody.receiveShadow = false;
     coinGroup.add(coinBody);
 
-    // 가운데 C 글자 텍스처 만들기
+    // C 글자와 금색 배경 텍스처
     const canvas = document.createElement("canvas");
     canvas.width = 256;
     canvas.height = 256;
 
     const ctx = canvas.getContext("2d");
 
-    // 글자 주변에 은은한 금색 빛 효과
-    ctx.shadowColor = "#fff4a3";
-    ctx.shadowBlur = 18;
+    // 밝은 금색 그라데이션 배경
+    const faceGradient = ctx.createRadialGradient(
+        95, 75, 10,
+        128, 128, 180
+    );
 
-    // C 글자 외곽
-    ctx.font = "bold 174px Georgia";
+    faceGradient.addColorStop(0, "#FFF5CF");
+    faceGradient.addColorStop(0.35, "#FFE6A0");
+    faceGradient.addColorStop(0.7, "#FFD770");
+    faceGradient.addColorStop(1, "#F5BD48");
+
+    ctx.fillStyle = faceGradient;
+    ctx.fillRect(0, 0, 256, 256);
+
+    // 코인 안쪽 둥근 테두리
+    ctx.beginPath();
+    ctx.arc(128, 128, 111, 0, Math.PI * 2);
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = "#FFF1B8";
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(128, 128, 99, 0, Math.PI * 2);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#EAB94E";
+    ctx.stroke();
+
+    // 가운데 C 글자
+    ctx.font = "bold 158px Georgia";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.lineJoin = "round";
-    ctx.lineWidth = 7;
-    ctx.strokeStyle = "#fff0a0";
-    ctx.strokeText("C", 128, 128);
 
-    // C 글자 내부
-    const goldGradient = ctx.createLinearGradient(70, 35, 190, 220);
-    goldGradient.addColorStop(0, "#fff8bd");
-    goldGradient.addColorStop(0.35, "#ffffff");
-    goldGradient.addColorStop(0.65, "#fff0a0");
-    goldGradient.addColorStop(1, "#9b5b00");
+    ctx.shadowColor = "#FFFBEA";
+    ctx.shadowBlur = 12;
 
-    ctx.fillStyle = goldGradient;
-    ctx.fillText("C", 128, 128);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#FFF8D9";
+    ctx.strokeText("C", 128, 130);
+
+    const letterGradient = ctx.createLinearGradient(
+        70, 50, 190, 205
+    );
+
+    letterGradient.addColorStop(0, "#FFFFFF");
+    letterGradient.addColorStop(0.45, "#FFF8D9");
+    letterGradient.addColorStop(1, "#FFE29A");
+
+    ctx.fillStyle = letterGradient;
+    ctx.fillText("C", 128, 130);
 
     const coinTexture = new THREE.CanvasTexture(canvas);
     coinTexture.colorSpace = THREE.SRGBColorSpace;
 
-    // 코인 앞면
-    const coinFaceMaterial = new THREE.MeshStandardMaterial({
-        color: "#ffd84d",
+    // 코인 앞면과 뒷면 재질
+    const coinFaceMaterial = new THREE.MeshBasicMaterial({
         map: coinTexture,
-        metalness: 0.85,
-        roughness: 0.18,
-        emissive: "#5e4000",
-        emissiveIntensity: 0.12
+        color: "#FFFFFF",
+        side: THREE.DoubleSide
     });
 
+    // 코인 앞면
     const coinFace = new THREE.Mesh(
-        new THREE.CircleGeometry(0.27, 48),
+        new THREE.CircleGeometry(0.315, 64),
         coinFaceMaterial
     );
 
     coinFace.position.z = 0.052;
-    coinFace.castShadow = true;
     coinGroup.add(coinFace);
 
     // 코인 뒷면
     const coinBack = new THREE.Mesh(
-        new THREE.CircleGeometry(0.27, 48),
+        new THREE.CircleGeometry(0.315, 64),
         coinFaceMaterial
     );
 
     coinBack.position.z = -0.052;
     coinBack.rotation.y = Math.PI;
-    coinBack.castShadow = true;
     coinGroup.add(coinBack);
+
+    // 코인에 반짝이는 장식 추가
+    const sparkleMaterial = new THREE.MeshBasicMaterial({
+        color: "#FFFFFF"
+    });
+
+    const sparklePositions = [
+        [-0.23, 0.23, 0.058],
+        [0.23, -0.23, 0.058],
+        [-0.23, -0.23, 0.058],
+        [0.23, 0.23, 0.058]
+    ];
+
+    sparklePositions.forEach((position) => {
+        const sparkle = new THREE.Mesh(
+            new THREE.SphereGeometry(0.025, 8, 8),
+            sparkleMaterial
+        );
+
+        sparkle.position.set(
+            position[0],
+            position[1],
+            position[2]
+        );
+
+        coinGroup.add(sparkle);
+    });
 
     // 코인 위치와 회전
     coinGroup.position.set(x, 0.85, z);
@@ -664,6 +717,7 @@ function makeCoin(x, z, index) {
     world.add(coinGroup);
     coinObjects.push(coinGroup);
 }
+
 // ================================================
 // 생물 모형
 // ================================================
