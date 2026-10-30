@@ -1508,6 +1508,300 @@ function makeVillage() {
     cabin.position.set(-13, 0, -13);
     village.add(cabin);
 
+        // ================================================
+    // 추가 오두막 3채
+    // ================================================
+
+    function addExtraCabin(x, z, wallColor, roofColor) {
+        const extraCabin = new THREE.Group();
+
+        // 집 몸체
+        addMesh(
+            extraCabin,
+            new THREE.BoxGeometry(5.5, 3, 5),
+            makeMaterial(wallColor),
+            0, 1.5, 0
+        );
+
+        // 집 지붕
+        const extraRoof = addMesh(
+            extraCabin,
+            new THREE.ConeGeometry(4.3, 2.3, 4),
+            makeMaterial(roofColor),
+            0, 4.1, 0
+        );
+        extraRoof.rotation.y = Math.PI / 4;
+
+        // 집 문
+        addMesh(
+            extraCabin,
+            new THREE.BoxGeometry(1, 1.9, 0.12),
+            makeMaterial("#65432f"),
+            0, 0.95, 2.56
+        );
+
+        // 집 창문
+        for (const side of [-1, 1]) {
+            addMesh(
+                extraCabin,
+                new THREE.BoxGeometry(0.85, 0.85, 0.12),
+                makeMaterial("#a9d9df"),
+                side * 1.7, 2, 2.56
+            );
+        }
+
+        extraCabin.position.set(x, 0, z);
+        village.add(extraCabin);
+    }
+
+    // 마을 곳곳에 집 배치
+       // ================================================
+    // 마을 전체에 오두막 29채 추가
+    // 기존 오두막 1채를 포함하여 총 30채
+    // ================================================
+
+    const cabinColors = [
+        ["#d6ad7d", "#80533b"],
+        ["#c99b68", "#754b32"],
+        ["#d8bd91", "#8b6040"],
+        ["#c8a47a", "#76513a"],
+        ["#dfc49a", "#906344"]
+    ];
+
+    const cabinXPositions = [-32, -20, -8, 4, 16, 28];
+    const cabinZPositions = [-30, -16, -2, 12, 26];
+
+    let extraCabinIndex = 0;
+
+    for (let row = 0; row < cabinZPositions.length; row++) {
+        for (let col = 0; col < cabinXPositions.length; col++) {
+
+            const x = cabinXPositions[col];
+            const z = cabinZPositions[row];
+
+            // 기존 오두막과 너무 가까운 위치 하나는 건너뜀
+            if (x === -8 && z === -2) {
+                continue;
+            }
+
+            const colors = cabinColors[
+                extraCabinIndex % cabinColors.length
+            ];
+
+            addExtraCabin(
+                x,
+                z,
+                colors[0],
+                colors[1]
+            );
+
+            extraCabinIndex++;
+        }
+    }
+
+
+    // ================================================
+    // 마을 농사밭
+    // ================================================
+
+    // 밭 전체의 흙 바닥
+    addMesh(
+        village,
+        new THREE.BoxGeometry(19, 0.18, 13),
+        makeMaterial("#795333"),
+        0, 0.1, 17
+    );
+
+    // 밭고랑 5줄
+    for (let row = 0; row < 5; row++) {
+        const cropZ = 12 + row * 2.3;
+
+        // 작물이 심긴 흙 줄
+        addMesh(
+            village,
+            new THREE.BoxGeometry(17, 0.12, 0.85),
+            makeMaterial("#9a7047"),
+            0, 0.22, cropZ
+        );
+
+        // 한 줄에 작물 12개씩 심기
+        for (let col = 0; col < 12; col++) {
+            const cropX = -7.5 + col * 1.35;
+
+            // 작물 줄기
+            addMesh(
+                village,
+                new THREE.CylinderGeometry(0.07, 0.1, 0.65, 6),
+                makeMaterial("#477d3c"),
+                cropX, 0.62, cropZ
+            );
+
+            // 작물 잎
+            for (const side of [-1, 1]) {
+                const leaf = addMesh(
+                    village,
+                    new THREE.SphereGeometry(0.24, 8, 6),
+                    makeMaterial("#6eaa4f"),
+                    cropX + side * 0.2,
+                    0.72,
+                    cropZ
+                );
+
+                leaf.scale.set(1.3, 0.45, 0.7);
+                leaf.rotation.z = side * 0.35;
+            }
+
+            // 일부 작물에는 열매 표현
+            if ((row + col) % 3 === 0) {
+                addMesh(
+                    village,
+                    new THREE.SphereGeometry(0.16, 8, 6),
+                    makeMaterial("#d98b45"),
+                    cropX,
+                    0.85,
+                    cropZ + 0.12
+                );
+            }
+        }
+    }
+
+
+    // ================================================
+    // 농사밭 주변 울타리
+    // ================================================
+
+    for (let i = 0; i < 9; i++) {
+        const x = -9 + i * 2.25;
+
+        addMesh(
+            village,
+            new THREE.BoxGeometry(0.15, 0.8, 0.15),
+            makeMaterial("#765033"),
+            x, 0.4, 10
+        );
+
+        addMesh(
+            village,
+            new THREE.BoxGeometry(0.15, 0.8, 0.15),
+            makeMaterial("#765033"),
+            x, 0.4, 24
+        );
+
+        if (i < 8) {
+            addMesh(
+                village,
+                new THREE.BoxGeometry(2.25, 0.12, 0.12),
+                makeMaterial("#98704a"),
+                x + 1.125, 0.65, 10
+            );
+
+            addMesh(
+                village,
+                new THREE.BoxGeometry(2.25, 0.12, 0.12),
+                makeMaterial("#98704a"),
+                x + 1.125, 0.65, 24
+            );
+        }
+    }
+
+
+    // ================================================
+    // 우물
+    // ================================================
+
+    // 우물 바닥
+    addMesh(
+        village,
+        new THREE.CylinderGeometry(1.2, 1.3, 0.8, 12),
+        makeMaterial("#8c8b7c"),
+        -12, 0.4, 5
+    );
+
+    // 우물 안쪽 물
+    addMesh(
+        village,
+        new THREE.CylinderGeometry(0.85, 0.85, 0.08, 12),
+        makeMaterial("#5babc0"),
+        -12, 0.78, 5
+    );
+
+    // 우물 기둥
+    for (const side of [-1, 1]) {
+        addMesh(
+            village,
+            new THREE.BoxGeometry(0.2, 3, 0.2),
+            makeMaterial("#765033"),
+            -12 + side * 1.1, 2, 5
+        );
+    }
+
+    // 우물 지붕
+    addMesh(
+        village,
+        new THREE.BoxGeometry(3.2, 0.2, 2.5),
+        makeMaterial("#754b32"),
+        -12, 3.6, 5
+    );
+
+
+    // ================================================
+    // 물통과 나무 상자
+    // ================================================
+
+    // 물통 2개
+    for (let i = 0; i < 2; i++) {
+        addMesh(
+            village,
+            new THREE.CylinderGeometry(0.45, 0.4, 0.9, 10),
+            makeMaterial("#8b6545"),
+            11 + i * 1.2, 0.45, 9
+        );
+
+        addMesh(
+            village,
+            new THREE.CylinderGeometry(0.47, 0.47, 0.1, 10),
+            makeMaterial("#5babc0"),
+            11 + i * 1.2, 0.88, 9
+        );
+    }
+
+    // 농산물을 담는 나무 상자 4개
+    for (let i = 0; i < 4; i++) {
+        const crateX = 9 + (i % 2) * 1.4;
+        const crateZ = 3 + Math.floor(i / 2) * 1.3;
+
+        addMesh(
+            village,
+            new THREE.BoxGeometry(1.1, 0.8, 1),
+            makeMaterial("#a87948"),
+            crateX, 0.4, crateZ
+        );
+
+        // 상자 안의 농산물
+        addMesh(
+            village,
+            new THREE.SphereGeometry(0.28, 8, 6),
+            makeMaterial(i % 2 === 0 ? "#d98b45" : "#8cae48"),
+            crateX, 0.95, crateZ
+        );
+    }
+
+
+    // ================================================
+    // 건초 더미
+    // ================================================
+
+    for (let i = 0; i < 4; i++) {
+        const hay = addMesh(
+            village,
+            new THREE.CylinderGeometry(0.65, 0.65, 1.1, 10),
+            makeMaterial("#d5b75e"),
+            -17 + i * 1.5, 0.55, 7
+        );
+
+        hay.rotation.z = Math.PI / 2;
+    }
+
     // 나머지 집 3채를 복제하여 마을에 배치
     const extraCabinPositions = [
         [13, -13],
