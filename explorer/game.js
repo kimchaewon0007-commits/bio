@@ -1589,15 +1589,15 @@ function rebuildEnvironment() {
         }
     }
 
-    // 넓은 탐험 공간 전체에 수집용 코인 배치
-    for (let i = 0; i < 500; i++) {
+    // 생물과 식물 주변에 코인을 촘촘하게 배치
+    for (let i = 0; i < 100; i++) {
         let x;
         let z;
         let attempts = 0;
 
         do {
-            x = (Math.random() - 0.5) * 2900;
-            z = (Math.random() - 0.5) * 2900;
+            x = (Math.random() - 0.5) * 180;
+            z = (Math.random() - 0.5) * 180;
             attempts++;
         } while (
             attempts < 40 &&
