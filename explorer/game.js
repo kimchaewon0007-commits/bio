@@ -1874,6 +1874,12 @@ function rebuildEnvironment() {
     groundMaterial.color.set(seasonColors[currentSeason].ground);
     groundMaterial.color.lerp(new THREE.Color(habitat.ground), 0.55);
 
+        // 마을 건물과 산책길 생성
+    makeVillage();
+
+    // 마을 주민과 숲 해설가 생성
+    makeVillageNPCs();
+    
     // 탐험 공간에 촘촘한 숲 조성
     for (let i = 0; i < 1800; i++) {
         const x = (Math.random() - 0.5) * 300;
