@@ -1456,6 +1456,351 @@ function makeCreature(species, x, z, index) {
     return group;
 }
 
+
+// ================================================
+// 생태 탐험 마을과 NPC
+// ================================================
+
+// 마을의 오두막, 길, 울타리, 벤치와 자연물을 생성
+function makeVillage() {
+    // 마을 오브젝트를 담을 그룹
+    const village = new THREE.Group();
+
+    // 오두막
+    const cabin = new THREE.Group();
+
+    addMesh(
+        cabin,
+        new THREE.BoxGeometry(6, 3.2, 5),
+        makeMaterial("#c99b68"),
+        0, 1.6, 0
+    );
+
+    // 오두막 지붕
+    const roof = addMesh(
+        cabin,
+        new THREE.ConeGeometry(4.6, 2.5, 4),
+        makeMaterial("#754b32"),
+        0, 4.2, 0
+    );
+    roof.rotation.y = Math.PI / 4;
+
+    // 오두막 문
+    addMesh(
+        cabin,
+        new THREE.BoxGeometry(1.1, 2, 0.12),
+        makeMaterial("#65432f"),
+        0, 1, 2.56
+    );
+
+    // 오두막 창문
+    for (const side of [-1, 1]) {
+        addMesh(
+            cabin,
+            new THREE.BoxGeometry(0.9, 0.9, 0.12),
+            makeMaterial("#a9d9df"),
+            side * 1.8, 2.0, 2.56
+        );
+    }
+
+    cabin.position.set(-13, 0, -13);
+    village.add(cabin);
+
+    // 오두막 앞 산책길
+    for (let i = 0; i < 18; i++) {
+        addMesh(
+            village,
+            new THREE.BoxGeometry(3.2, 0.08, 1.25),
+            makeMaterial(i % 2 === 0 ? "#c5aa7d" : "#b99a6b"),
+            0, 0.015, 11 - i * 1.8
+        );
+    }
+
+    // 마을 주변 울타리
+    for (let i = 0; i < 13; i++) {
+        const x = -21 + i * 3.5;
+
+        for (const z of [-23, 5]) {
+            addMesh(
+                village,
+                new THREE.BoxGeometry(0.18, 1.1, 0.18),
+                makeMaterial("#765033"),
+                x, 0.55, z
+            );
+        }
+
+        if (i < 12) {
+            for (const z of [-23, 5]) {
+                addMesh(
+                    village,
+                    new THREE.BoxGeometry(3.5, 0.13, 0.13),
+                    makeMaterial("#98704a"),
+                    x + 1.75, 0.85, z
+                );
+            }
+        }
+    }
+
+    for (let i = 0; i < 9; i++) {
+        const z = -20 + i * 3;
+
+        for (const x of [-21, 21]) {
+            addMesh(
+                village,
+                new THREE.BoxGeometry(0.18, 1.1, 0.18),
+                makeMaterial("#765033"),
+                x, 0.55, z
+            );
+        }
+
+        if (i < 8) {
+            for (const x of [-21, 21]) {
+                addMesh(
+                    village,
+                    new THREE.BoxGeometry(0.13, 0.13, 3),
+                    makeMaterial("#98704a"),
+                    x, 0.85, z + 1.5
+                );
+            }
+        }
+    }
+
+    // 나무 벤치 3개
+    const benchPositions = [
+        [-7, -4],
+        [8, -7],
+        [7, 3]
+    ];
+
+    benchPositions.forEach(([x, z]) => {
+        addMesh(
+            village,
+            new THREE.BoxGeometry(2.4, 0.18, 0.75),
+            makeMaterial("#98633e"),
+            x, 0.75, z
+        );
+
+        addMesh(
+            village,
+            new THREE.BoxGeometry(2.4, 0.9, 0.15),
+            makeMaterial("#805334"),
+            x, 1.15, z + 0.3
+        );
+
+        for (const side of [-1, 1]) {
+            addMesh(
+                village,
+                new THREE.BoxGeometry(0.15, 0.75, 0.15),
+                makeMaterial("#68452e"),
+                x + side * 0.9, 0.38, z
+            );
+        }
+    });
+
+    // 마을 주변 바위
+    for (let i = 0; i < 24; i++) {
+        const rock = addMesh(
+            village,
+            new THREE.DodecahedronGeometry(
+                0.35 + Math.random() * 0.55,
+                0
+            ),
+            makeMaterial(i % 2 === 0 ? "#888d7b" : "#737b70"),
+            (Math.random() - 0.5) * 58,
+            0.25,
+            (Math.random() - 0.5) * 58
+        );
+
+        rock.rotation.set(
+            Math.random(),
+            Math.random(),
+            Math.random()
+        );
+    }
+
+    // 풀 무리
+    for (let i = 0; i < 150; i++) {
+        const grass = new THREE.Group();
+
+        for (let j = 0; j < 3; j++) {
+            const blade = addMesh(
+                grass,
+                new THREE.ConeGeometry(0.09, 0.65, 4),
+                makeMaterial(
+                    ["#477b3c", "#609447", "#83a957"][j]
+                ),
+                (Math.random() - 0.5) * 0.35,
+                0.3,
+                (Math.random() - 0.5) * 0.35
+            );
+
+            blade.rotation.z = (Math.random() - 0.5) * 0.45;
+        }
+
+        grass.position.set(
+            (Math.random() - 0.5) * 100,
+            0,
+            (Math.random() - 0.5) * 100
+        );
+
+        village.add(grass);
+    }
+
+    // 작은 버섯
+    for (let i = 0; i < 22; i++) {
+        const mushroom = new THREE.Group();
+
+        addMesh(
+            mushroom,
+            new THREE.CylinderGeometry(0.07, 0.09, 0.28, 7),
+            makeMaterial("#eee0c5"),
+            0, 0.14, 0
+        );
+
+        addMesh(
+            mushroom,
+            new THREE.SphereGeometry(0.2, 8, 6),
+            makeMaterial("#b85b45"),
+            0, 0.32, 0
+        );
+
+        mushroom.position.set(
+            (Math.random() - 0.5) * 70,
+            0,
+            (Math.random() - 0.5) * 70
+        );
+
+        village.add(mushroom);
+    }
+
+    world.add(village);
+}
+
+// 마을 주민과 숲 해설가 생성
+function makeVillager(x, z, isGuide, index) {
+    const person = new THREE.Group();
+
+    const clothesColor = isGuide
+        ? "#3f7650"
+        : ["#bd8055", "#6688a0", "#b28b58", "#8b719e"][index % 4];
+
+    // 몸통
+    addMesh(
+        person,
+        new THREE.CylinderGeometry(0.25, 0.32, 0.85, 8),
+        makeMaterial(clothesColor),
+        0, 0.95, 0
+    );
+
+    // 머리
+    addMesh(
+        person,
+        new THREE.SphereGeometry(0.25, 12, 10),
+        makeMaterial("#e8bd96"),
+        0, 1.62, 0
+    );
+
+    // 머리카락
+    addMesh(
+        person,
+        new THREE.SphereGeometry(0.26, 10, 8),
+        makeMaterial("#49372b"),
+        0, 1.78, -0.04
+    );
+
+    // 다리
+    for (const side of [-1, 1]) {
+        addMesh(
+            person,
+            new THREE.BoxGeometry(0.16, 0.55, 0.18),
+            makeMaterial("#51483d"),
+            side * 0.12, 0.28, 0
+        );
+    }
+
+    // 숲 해설가의 모자
+    if (isGuide) {
+        addMesh(
+            person,
+            new THREE.CylinderGeometry(0.3, 0.3, 0.1, 10),
+            makeMaterial("#d4a45e"),
+            0, 1.98, 0
+        );
+
+        addMesh(
+            person,
+            new THREE.CylinderGeometry(0.2, 0.24, 0.22, 10),
+            makeMaterial("#527b45"),
+            0, 2.12, 0
+        );
+    }
+
+    // 이름표
+    const label = makeLabel(
+        isGuide ? "🌿 숲 해설가" : "마을 주민",
+        2.55
+    );
+    person.add(label);
+
+    person.position.set(x, 0, z);
+
+    // 주민도 천천히 움직이도록 설정
+    person.userData.species = {
+        activity: "day"
+    };
+
+    person.userData.baseX = x;
+    person.userData.baseZ = z;
+    person.userData.phase = Math.random() * Math.PI * 2;
+    person.userData.walking = true;
+    person.userData.plant = false;
+    person.userData.villager = true;
+
+    // 숲 해설가를 클릭하면 생태 설명이 열리도록 설정
+    if (isGuide) {
+        person.userData.species = {
+            name: "숲 해설가",
+            emoji: "🧑‍🌾",
+            type: "생태 안내 NPC",
+            description:
+                `${currentCountry} ${currentHabitat}에는 다양한 동식물이 함께 살아갑니다. 식물은 동물에게 먹이와 서식 공간을 제공하고, 곤충은 꽃가루받이와 분해 등 생태계의 여러 과정에 참여합니다. 생물 다양성을 지키려면 서식지를 보호하고 생물들이 살아갈 환경을 유지해야 합니다.`,
+            activity: "day"
+        };
+
+        person.traverse((object) => {
+            if (object.isMesh || object.isSprite) {
+                object.userData.owner = person;
+                interactable.push(object);
+            }
+        });
+    }
+
+    world.add(person);
+    animatedCreatures.push(person);
+
+    return person;
+}
+
+// 마을 주민과 숲 해설가 배치
+function makeVillageNPCs() {
+    // 마을 주민
+    const villagerPositions = [
+        [-5, -3],
+        [5, -5],
+        [-8, 2],
+        [10, 1],
+        [2, -15]
+    ];
+
+    villagerPositions.forEach(([x, z], index) => {
+        makeVillager(x, z, false, index);
+    });
+
+    // 숲 해설가
+    makeVillager(-5, -15, true, 0);
+}
+
+
 // ================================================
 // 환경 생성 및 정리
 // ================================================
