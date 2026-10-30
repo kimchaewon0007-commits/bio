@@ -1503,8 +1503,27 @@ function makeVillage() {
         );
     }
 
+
+    // 첫 번째 집
     cabin.position.set(-13, 0, -13);
     village.add(cabin);
+
+    // 나머지 집 3채를 복제하여 마을에 배치
+    const extraCabinPositions = [
+        [13, -13],
+        [-13, 15],
+        [13, 15]
+    ];
+
+    extraCabinPositions.forEach(([x, z], index) => {
+        const extraCabin = cabin.clone(true);
+
+        extraCabin.position.set(x, 0, z);
+        extraCabin.rotation.y = index * 0.35;
+
+        village.add(extraCabin);
+    });
+
 
     // 오두막 앞 산책길
     for (let i = 0; i < 18; i++) {
@@ -1783,23 +1802,26 @@ function makeVillager(x, z, isGuide, index) {
 
 // 마을 주민과 숲 해설가 배치
 function makeVillageNPCs() {
-    // 마을 주민
+    // 집 주변에서 생활하는 주민들의 위치
     const villagerPositions = [
-        [-5, -3],
-        [5, -5],
-        [-8, 2],
-        [10, 1],
-        [2, -15]
+        [-17, -10],
+        [-9, -9],
+        [9, -10],
+        [17, -9],
+        [-17, 19],
+        [-9, 19],
+        [9, 19],
+        [17, 19]
     ];
 
+    // 주민 8명 생성
     villagerPositions.forEach(([x, z], index) => {
         makeVillager(x, z, false, index);
     });
 
-    // 숲 해설가
-    makeVillager(-5, -15, true, 0);
+    // 마을 중앙에서 탐험객을 안내하는 숲 해설가 생성
+    makeVillager(0, -7, true, 0);
 }
-
 
 // ================================================
 // 환경 생성 및 정리
