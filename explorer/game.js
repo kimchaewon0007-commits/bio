@@ -379,7 +379,7 @@ const groundMaterial = new THREE.MeshStandardMaterial({
 });
 
 const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(140, 140),
+    new THREE.PlaneGeometry(3000, 3000),
     groundMaterial
 );
 ground.rotation.x = -Math.PI / 2;
@@ -1507,10 +1507,10 @@ function rebuildEnvironment() {
     groundMaterial.color.set(seasonColors[currentSeason].ground);
     groundMaterial.color.lerp(new THREE.Color(habitat.ground), 0.55);
 
-    // 주변 나무
-    for (let i = 0; i < 65; i++) {
-        const x = (Math.random() - 0.5) * 62;
-        const z = (Math.random() - 0.5) * 62;
+    // 3000 크기의 넓은 탐험 공간에 나무 배치
+    for (let i = 0; i < 12000; i++) {
+        const x = (Math.random() - 0.5) * 2900;
+        const z = (Math.random() - 0.5) * 2900;
 
         if (Math.abs(x) < 4 && z > -8 && z < 12) continue;
 
@@ -1537,13 +1537,12 @@ function rebuildEnvironment() {
 
         const isInsect = type === "곤충";
 
-        // 식물은 여러 무리, 곤충은 여러 마리,
-        // 동물도 한 종류당 여러 개체 생성
+        // 생물 종류에 따라 여러 개체 생성
         const count = isPlant
-            ? 3
+            ? 20
             : isInsect
-                ? 5
-                : 3;
+                ? 40
+                : 30;
 
         for (let copy = 0; copy < count; copy++) {
             let x;
@@ -1551,15 +1550,15 @@ function rebuildEnvironment() {
             let attempts = 0;
 
             do {
-                x = (Math.random() - 0.5) * 42;
-                z = (Math.random() - 0.5) * 42;
+                x = (Math.random() - 0.5) * 2900;
+                z = (Math.random() - 0.5) * 2900;
                 attempts++;
             } while (
                 attempts < 30 &&
                 Math.abs(x) < 4 &&
                 Math.abs(z - 5) < 5
             );
-
+            
             const creature = makeCreature(
                 species,
                 x,
@@ -1580,25 +1579,25 @@ function rebuildEnvironment() {
         }
     });
 
-    // 꽃과 작은 식물
-    for (let i = 0; i < 90; i++) {
-        const x = (Math.random() - 0.5) * 42;
-        const z = (Math.random() - 0.5) * 42;
+    // 넓은 탐험 공간에 꽃과 작은 식물 배치
+    for (let i = 0; i < 10000; i++) {
+        const x = (Math.random() - 0.5) * 2900;
+        const z = (Math.random() - 0.5) * 2900;
 
         if (seasonColors[currentSeason].flower && Math.random() > 0.4) {
             makeFlower(x, z, i);
         }
     }
 
- // 숲 곳곳에 수집용 코인 배치
-    for (let i = 0; i < 18; i++) {
+    // 넓은 탐험 공간 전체에 수집용 코인 배치
+    for (let i = 0; i < 500; i++) {
         let x;
         let z;
         let attempts = 0;
 
         do {
-            x = (Math.random() - 0.5) * 44;
-            z = (Math.random() - 0.5) * 44;
+            x = (Math.random() - 0.5) * 2900;
+            z = (Math.random() - 0.5) * 2900;
             attempts++;
         } while (
             attempts < 40 &&
@@ -1823,8 +1822,9 @@ function updateMovement(delta) {
         camera.position.addScaledVector(move, speed * delta);
     }
 
-    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -48, 48);
-    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -48, 48);
+    // 3000 크기의 탐험 공간에서 자유롭게 이동
+    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -1490, 1490);
+    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -1490, 1490);
     camera.position.y = 1.7;
     
     collectNearbyCoins();
