@@ -1537,12 +1537,12 @@ function rebuildEnvironment() {
 
         const isInsect = type === "곤충";
 
-        // 생물 종류에 따라 여러 개체 생성
+        // 시작 위치 주변에 다양한 생물 배치
         const count = isPlant
-            ? 20
+            ? 30
             : isInsect
                 ? 40
-                : 30;
+                : 35;
 
         for (let copy = 0; copy < count; copy++) {
             let x;
@@ -1550,8 +1550,8 @@ function rebuildEnvironment() {
             let attempts = 0;
 
             do {
-                x = (Math.random() - 0.5) * 2900;
-                z = (Math.random() - 0.5) * 2900;
+                x = (Math.random() - 0.5) * 300;
+                z = (Math.random() - 0.5) * 300;
                 attempts++;
             } while (
                 attempts < 30 &&
