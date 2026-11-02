@@ -29,6 +29,17 @@ const animatedCreatures = [];
 const scenery = [];
 const keys = Object.create(null);
 
+// 마을 주민 목록
+const villagers = [];
+
+// 현재 대화 중인 주민
+let currentTalkingVillager = null;
+
+// 주민 대화 상태
+let dialogueCooldown = 0;
+let nearbyVillager = null;
+let npcChatCooldown = 0;
+
 // ================================================
 // 코인 및 탐험 미션 상태
 // ================================================
@@ -1989,114 +2000,410 @@ function makeVillage() {
     world.add(village);
 }
 
-// 마을 주민과 숲 해설가 생성
+// ================================================
+// 고퀄리티 3D 마을 주민 생성
+// ================================================
+
 function makeVillager(x, z, isGuide, index) {
     const person = new THREE.Group();
 
-    const clothesColor = isGuide
-        ? "#3f7650"
-        : ["#bd8055", "#6688a0", "#b28b58", "#8b719e"][index % 4];
+    const names = [
+        "루미", "모모", "하루", "보리",
+        "두리", "나나", "코코", "토리",
+        "초록"
+    ];
 
-    // 몸통
+    const skinColors = [
+        "#f4c9a5", "#e7b48d", "#d69b72",
+        "#f0c5a0", "#c98e6b"
+    ];
+
+    const hairColors = [
+        "#49372b", "#30251f", "#8a5433",
+        "#d4a15d", "#5c4a70", "#b7a18b"
+    ];
+
+    const clothesColors = [
+        "#e58c78", "#75a8c9", "#e5bd65",
+        "#a88bc5", "#78a77b", "#e5a5b8",
+        "#d58c55", "#7e9d91"
+    ];
+
+    const skinColor = skinColors[index % skinColors.length];
+    const hairColor = hairColors[index % hairColors.length];
+
+    const clothesColor = isGuide
+        ? "#477d54"
+        : clothesColors[index % clothesColors.length];
+
+    const skinMat = makeMaterial(skinColor);
+    const hairMat = makeMaterial(hairColor);
+    const clothesMat = makeMaterial(clothesColor);
+    const darkMat = makeMaterial("#49372b");
+    const shoeMat = makeMaterial("#59483d");
+
+    // 몸통 그룹
+    const body = new THREE.Group();
+    person.add(body);
+
+    // 둥근 몸통
     addMesh(
-        person,
-        new THREE.CylinderGeometry(0.25, 0.32, 0.85, 8),
-        makeMaterial(clothesColor),
-        0, 0.95, 0
+        body,
+        new THREE.CapsuleGeometry(0.29, 0.42, 5, 10),
+        clothesMat,
+        0, 1.02, 0
+    );
+
+    // 옷깃
+    addMesh(
+        body,
+        new THREE.SphereGeometry(0.13, 12, 8),
+        makeMaterial("#fff0d9"),
+        0, 1.29, 0.03
+    );
+
+    // 허리 장식
+    addMesh(
+        body,
+        new THREE.BoxGeometry(0.43, 0.07, 0.32),
+        makeMaterial("#e9d6a8"),
+        0, 0.78, 0
+    );
+
+    // 목
+    addMesh(
+        body,
+        new THREE.CylinderGeometry(0.095, 0.11, 0.16, 12),
+        skinMat,
+        0, 1.38, 0
     );
 
     // 머리
+    const head = new THREE.Group();
+    head.position.set(0, 1.68, 0);
+    person.add(head);
+
     addMesh(
-        person,
-        new THREE.SphereGeometry(0.25, 12, 10),
-        makeMaterial("#e8bd96"),
-        0, 1.62, 0
+        head,
+        new THREE.SphereGeometry(0.29, 24, 20),
+        skinMat,
+        0, 0, 0
     );
 
-    // 머리카락
-    addMesh(
-        person,
-        new THREE.SphereGeometry(0.26, 10, 8),
-        makeMaterial("#49372b"),
-        0, 1.78, -0.04
-    );
-
-    // 다리
+    // 귀
     for (const side of [-1, 1]) {
         addMesh(
-            person,
-            new THREE.BoxGeometry(0.16, 0.55, 0.18),
-            makeMaterial("#51483d"),
-            side * 0.12, 0.28, 0
+            head,
+            new THREE.SphereGeometry(0.075, 12, 10),
+            skinMat,
+            side * 0.27, -0.02, 0
         );
     }
 
-    // 숲 해설가의 모자
+    // 앞머리
+    addMesh(
+        head,
+        new THREE.SphereGeometry(0.29, 20, 12),
+        hairMat,
+        0, 0.13, -0.045
+    );
+
+    // 앞머리 모양
+    addMesh(
+        head,
+        new THREE.SphereGeometry(0.17, 14, 10),
+        hairMat,
+        -0.17, 0.06, 0.17
+    );
+
+    addMesh(
+        head,
+        new THREE.SphereGeometry(0.17, 14, 10),
+        hairMat,
+        0.17, 0.06, 0.17
+    );
+
+    // 얼굴 장식
+    const eyeMat = new THREE.MeshStandardMaterial({
+        color: "#302820",
+        roughness: 0.45
+    });
+
+    const whiteMat = new THREE.MeshStandardMaterial({
+        color: "#ffffff"
+    });
+
+    for (const side of [-1, 1]) {
+        // 눈 흰자
+        addMesh(
+            head,
+            new THREE.SphereGeometry(0.052, 12, 10),
+            whiteMat,
+            side * 0.105, -0.015, 0.255
+        );
+
+        // 눈동자
+        addMesh(
+            head,
+            new THREE.SphereGeometry(0.031, 10, 8),
+            eyeMat,
+            side * 0.105, -0.015, 0.292
+        );
+
+        // 볼터치
+        addMesh(
+            head,
+            new THREE.SphereGeometry(0.055, 12, 8),
+            makeMaterial("#ed9b91"),
+            side * 0.19, -0.105, 0.235
+        );
+    }
+
+    // 코
+    addMesh(
+        head,
+        new THREE.SphereGeometry(0.035, 10, 8),
+        makeMaterial("#d99e80"),
+        0, -0.075, 0.29
+    );
+
+    // 입
+    addMesh(
+        head,
+        new THREE.TorusGeometry(0.045, 0.012, 6, 12, Math.PI),
+        makeMaterial("#a65d59"),
+        0, -0.15, 0.275
+    );
+
+    // 머리 뒤쪽
+    addMesh(
+        head,
+        new THREE.SphereGeometry(0.27, 16, 12),
+        hairMat,
+        0, -0.04, -0.15
+    );
+
+    // 앞치마 또는 가슴 장식
     if (isGuide) {
         addMesh(
-            person,
-            new THREE.CylinderGeometry(0.3, 0.3, 0.1, 10),
-            makeMaterial("#d4a45e"),
-            0, 1.98, 0
+            body,
+            new THREE.BoxGeometry(0.31, 0.42, 0.035),
+            makeMaterial("#d7c18a"),
+            0, 0.98, 0.285
         );
 
         addMesh(
-            person,
-            new THREE.CylinderGeometry(0.2, 0.24, 0.22, 10),
-            makeMaterial("#527b45"),
-            0, 2.12, 0
+            body,
+            new THREE.SphereGeometry(0.07, 10, 8),
+            makeMaterial("#e6b85c"),
+            0, 1.05, 0.32
         );
+    } else {
+        // 주민마다 다른 가슴 장식
+        addMesh(
+            body,
+            new THREE.SphereGeometry(0.055, 10, 8),
+            makeMaterial(
+                ["#f4d58a", "#e9a5a5", "#a9d7c1", "#d6b3e8"][index % 4]
+            ),
+            0.13, 1.12, 0.25
+        );
+    }
+
+    // 팔과 다리 관절 그룹
+    const limbs = [];
+
+    for (const side of [-1, 1]) {
+        // 팔 관절
+        const armPivot = new THREE.Group();
+        armPivot.position.set(side * 0.31, 1.23, 0);
+        person.add(armPivot);
+
+        addMesh(
+            armPivot,
+            new THREE.CapsuleGeometry(0.085, 0.34, 4, 8),
+            clothesMat,
+            0, -0.22, 0
+        );
+
+        // 손
+        addMesh(
+            armPivot,
+            new THREE.SphereGeometry(0.09, 12, 10),
+            skinMat,
+            0, -0.45, 0.015
+        );
+
+        // 다리 관절
+        const legPivot = new THREE.Group();
+        legPivot.position.set(side * 0.13, 0.65, 0);
+        person.add(legPivot);
+
+        addMesh(
+            legPivot,
+            new THREE.CapsuleGeometry(0.095, 0.34, 4, 8),
+            makeMaterial("#66564a"),
+            0, -0.23, 0
+        );
+
+        // 신발
+        addMesh(
+            legPivot,
+            new THREE.SphereGeometry(0.12, 12, 8),
+            shoeMat,
+            0, -0.43, 0.055
+        );
+
+        limbs.push({
+            arm: armPivot,
+            leg: legPivot,
+            side
+        });
+    }
+
+    // 주민별 머리 장식
+    if (isGuide) {
+        // 숲 해설가 모자
+        addMesh(
+            head,
+            new THREE.CylinderGeometry(0.34, 0.34, 0.07, 20),
+            makeMaterial("#d8ad60"),
+            0, 0.29, 0
+        );
+
+        addMesh(
+            head,
+            new THREE.CylinderGeometry(0.22, 0.25, 0.23, 16),
+            makeMaterial("#477d54"),
+            0, 0.43, 0
+        );
+    } else {
+        if (index % 3 === 0) {
+            // 꽃 머리핀
+            addMesh(
+                head,
+                new THREE.SphereGeometry(0.09, 10, 8),
+                makeMaterial("#f5a6b8"),
+                0.24, 0.2, 0.1
+            );
+        } else if (index % 3 === 1) {
+            // 작은 모자
+            addMesh(
+                head,
+                new THREE.SphereGeometry(0.23, 14, 8),
+                makeMaterial("#e8c57c"),
+                0, 0.22, 0
+            );
+        }
     }
 
     // 이름표
-    const label = makeLabel(
-        isGuide ? "🌿 숲 해설가" : "마을 주민",
-        2.55
-    );
+    const villagerName = isGuide
+        ? "🌿 숲 해설가"
+        : names[index % names.length];
+
+    const label = makeLabel(villagerName, 2.65);
     person.add(label);
 
     person.position.set(x, 0, z);
 
-    // 주민도 천천히 움직이도록 설정
+    // 주민 이동 정보
     person.userData.species = {
+        name: villagerName,
+        emoji: isGuide ? "🧑‍🌾" : "🧑",
+        type: isGuide ? "생태 안내 NPC" : "마을 주민",
+        description: isGuide
+            ? `${currentCountry} ${currentHabitat}의 생태계를 안내하는 숲 해설가입니다. 다양한 생물과 서식지에 대해 알려줍니다.`
+            : `${villagerName}은 마을에서 생활하는 주민입니다. 마을을 돌아다니며 주변 이웃들과 함께 지냅니다.`,
         activity: "day"
     };
 
     person.userData.baseX = x;
     person.userData.baseZ = z;
     person.userData.phase = Math.random() * Math.PI * 2;
+    person.userData.villager = true;
     person.userData.walking = true;
     person.userData.plant = false;
-    person.userData.villager = true;
+    person.userData.limbs = limbs;
+    person.userData.head = head;
+    person.userData.walkSpeed = 1.7 + Math.random() * 0.6;
+    person.userData.walkRadius = 2.5 + Math.random() * 2.5;
+    person.userData.targetX = x;
+    person.userData.targetZ = z;
+    person.userData.changeTargetTime = 0;
+    person.userData.isGuide = isGuide;
 
-    // 숲 해설가를 클릭하면 생태 설명이 열리도록 설정
-    if (isGuide) {
-        person.userData.species = {
-            name: "숲 해설가",
-            emoji: "🧑‍🌾",
-            type: "생태 안내 NPC",
-            description:
-                `${currentCountry} ${currentHabitat}에는 다양한 동식물이 함께 살아갑니다. 식물은 동물에게 먹이와 서식 공간을 제공하고, 곤충은 꽃가루받이와 분해 등 생태계의 여러 과정에 참여합니다. 생물 다양성을 지키려면 서식지를 보호하고 생물들이 살아갈 환경을 유지해야 합니다.`,
-            activity: "day"
-        };
+    // 모든 주민을 클릭 가능한 대상으로 등록
+    person.traverse((object) => {
+        if (object.isMesh || object.isSprite) {
+            object.userData.owner = person;
+            interactable.push(object);
+        }
+    });
 
-        person.traverse((object) => {
-            if (object.isMesh || object.isSprite) {
-                object.userData.owner = person;
-                interactable.push(object);
-            }
-        });
-    }
+   // 주민 대화 시스템 정보
+const villagerNames = [
+    "루미", "모모", "하루", "보리",
+    "두리", "나나", "코코", "토리"
+];
 
-    world.add(person);
-    animatedCreatures.push(person);
+const personalities = [
+    "명랑한",
+    "조용한",
+    "호기심 많은",
+    "다정한",
+    "장난기 많은",
+    "차분한",
+    "활발한",
+    "친절한"
+];
 
-    return person;
+person.userData.villager = true;
+
+person.userData.villagerName = isGuide
+    ? "숲 해설가"
+    : villagerNames[index % villagerNames.length];
+
+person.userData.personality =
+    isGuide
+        ? "친절한"
+        : personalities[index % personalities.length];
+
+person.userData.dialogueIndex = 0;
+person.userData.lastTalkTime = 0;
+person.userData.chatting = false;
+
+person.userData.dialogues = isGuide
+    ? [
+        "안녕하세요! 이 마을의 생태계를 안내해 드릴게요.",
+        `${currentCountry}의 ${currentHabitat}에는 다양한 생물이 살고 있어요.`,
+        "주변의 생물들을 관찰하면 코인도 얻을 수 있답니다!",
+        "식물과 동물은 서로 영향을 주며 살아가요.",
+        "자연을 보호하는 것이 생물 다양성을 지키는 첫걸음이에요."
+    ]
+    : [
+        "안녕하세요! 오늘 마을이 참 평화롭네요.",
+        "저는 이 마을에서 지내는 게 정말 좋아요!",
+        "저기 꽃밭도 한번 구경해 보세요.",
+        "요즘 숲에 새로운 생물들이 나타났다고 해요.",
+        "마을을 천천히 둘러보면 재미있는 걸 발견할 수 있을 거예요.",
+        "오늘은 어떤 모험을 하고 계세요?",
+        "다른 주민들과도 이야기해 보셨나요?"
+    ];
+
+villagers.push(person);
+
+world.add(person);
+animatedCreatures.push(person);
+
+return person;
 }
 
-// 마을 주민과 숲 해설가 배치
+// ================================================
+// 마을 주민 배치
+// ================================================
+
 function makeVillageNPCs() {
-    // 집 주변에서 생활하는 주민들의 위치
     const villagerPositions = [
         [-17, -10],
         [-9, -9],
@@ -2108,14 +2415,437 @@ function makeVillageNPCs() {
         [17, 19]
     ];
 
-    // 주민 8명 생성
+    // 일반 주민 8명 생성
     villagerPositions.forEach(([x, z], index) => {
         makeVillager(x, z, false, index);
     });
 
-    // 마을 중앙에서 탐험객을 안내하는 숲 해설가 생성
+    // 숲 해설가 생성
     makeVillager(0, -7, true, 0);
 }
+
+// ================================================
+// 주민 대화 시스템
+// ================================================
+
+// 대화창 HTML을 JavaScript로 생성
+const dialoguePanel = document.createElement("div");
+
+dialoguePanel.id = "villager-dialogue";
+dialoguePanel.innerHTML = `
+    <div id="dialogue-header">
+        <span id="dialogue-name">마을 주민</span>
+        <button id="dialogue-close">✕</button>
+    </div>
+
+    <div id="dialogue-content">
+        안녕하세요!
+    </div>
+
+    <div id="dialogue-footer">
+        <span id="dialogue-hint">E 키 또는 버튼을 눌러 대화하기</span>
+        <button id="dialogue-next">다음 대화</button>
+    </div>
+`;
+
+document.body.appendChild(dialoguePanel);
+
+// 주민 대화창 디자인
+const dialogueStyle = document.createElement("style");
+
+dialogueStyle.textContent = `
+    #villager-dialogue {
+        display: none;
+        position: fixed;
+        left: 50%;
+        bottom: 35px;
+        transform: translateX(-50%);
+        width: min(540px, calc(100% - 30px));
+        padding: 20px 22px;
+        border: 2px solid #d6e9c9;
+        border-radius: 22px;
+        background: rgba(250, 255, 245, 0.97);
+        color: #31533a;
+        box-shadow: 0 12px 40px rgba(20, 50, 25, 0.3);
+        z-index: 100;
+        font-family: Arial, "Malgun Gothic", sans-serif;
+    }
+
+    #dialogue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #dcebd4;
+    }
+
+    #dialogue-name {
+        font-size: 18px;
+        font-weight: 800;
+        color: #39764a;
+    }
+
+    #dialogue-close {
+        border: none;
+        border-radius: 8px;
+        padding: 6px 10px;
+        background: #e8f2e1;
+        color: #31533a;
+        cursor: pointer;
+    }
+
+    #dialogue-content {
+        min-height: 75px;
+        padding: 20px 4px;
+        font-size: 16px;
+        line-height: 1.8;
+    }
+
+    #dialogue-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    #dialogue-hint {
+        color: #789078;
+        font-size: 12px;
+    }
+
+    #dialogue-next {
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        background: #548c5c;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    #dialogue-next:hover {
+        background: #3e7048;
+    }
+
+    #dialogue-close:hover {
+        background: #d7e9ce;
+    }
+
+    #villager-interaction-hint {
+        display: none;
+        position: fixed;
+        left: 50%;
+        bottom: 115px;
+        transform: translateX(-50%);
+        padding: 12px 20px;
+        border: 1px solid rgba(255,255,255,0.4);
+        border-radius: 14px;
+        background: rgba(30, 65, 39, 0.88);
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+        z-index: 90;
+        pointer-events: none;
+    }
+
+    #villager-speech-bubble {
+        display: none;
+        position: fixed;
+        left: 50%;
+        top: 22%;
+        transform: translateX(-50%);
+        padding: 12px 18px;
+        border: 1px solid #d6e9c9;
+        border-radius: 16px;
+        background: rgba(250, 255, 245, 0.96);
+        color: #31533a;
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        z-index: 80;
+        pointer-events: none;
+        text-align: center;
+    }
+
+    #villager-dialogue button {
+        font-family: inherit;
+    }
+
+    @media (max-width: 600px) {
+        #villager-dialogue {
+            bottom: 15px;
+            padding: 15px;
+        }
+
+        #dialogue-content {
+            font-size: 14px;
+        }
+
+        #dialogue-hint {
+            font-size: 10px;
+        }
+    }
+`;
+
+document.head.appendChild(dialogueStyle);
+
+// 가까이 가면 표시되는 안내문
+const interactionHint = document.createElement("div");
+interactionHint.id = "villager-interaction-hint";
+interactionHint.textContent = "E 키를 눌러 주민과 대화하기";
+document.body.appendChild(interactionHint);
+
+// 주민이 먼저 말을 걸 때 표시되는 말풍선
+const speechBubble = document.createElement("div");
+speechBubble.id = "villager-speech-bubble";
+document.body.appendChild(speechBubble);
+
+// 대화창 요소
+const dialogueNameElement =
+    document.getElementById("dialogue-name");
+
+const dialogueContentElement =
+    document.getElementById("dialogue-content");
+
+const dialogueNextButton =
+    document.getElementById("dialogue-next");
+
+const dialogueCloseButton =
+    document.getElementById("dialogue-close");
+
+// 주민과 대화 시작
+function startVillagerDialogue(villager) {
+    if (!villager || !villager.userData.villager) return;
+
+    currentTalkingVillager = villager;
+
+    const data = villager.userData;
+
+    dialogueNameElement.textContent =
+        data.villagerName || "마을 주민";
+
+    dialogueContentElement.textContent =
+        data.dialogues[data.dialogueIndex];
+
+    dialoguePanel.style.display = "block";
+    interactionHint.style.display = "none";
+
+    setMessage(`${data.villagerName}와 대화를 시작했어요.`);
+}
+
+// 다음 대사 표시
+function nextVillagerDialogue() {
+    if (!currentTalkingVillager) return;
+
+    const data = currentTalkingVillager.userData;
+
+    data.dialogueIndex++;
+
+    if (data.dialogueIndex >= data.dialogues.length) {
+        data.dialogueIndex = 0;
+    }
+
+    dialogueContentElement.textContent =
+        data.dialogues[data.dialogueIndex];
+}
+
+// 대화 종료
+function closeVillagerDialogue() {
+    dialoguePanel.style.display = "none";
+    currentTalkingVillager = null;
+}
+
+// 버튼 이벤트
+dialogueNextButton.addEventListener(
+    "click",
+    nextVillagerDialogue
+);
+
+dialogueCloseButton.addEventListener(
+    "click",
+    closeVillagerDialogue
+);
+
+// 주민이 플레이어에게 먼저 말 걸기
+function villagerGreeting(villager) {
+    if (!villager) return;
+
+    const data = villager.userData;
+
+    const greetings = [
+        `${data.villagerName}: 안녕하세요!`,
+        `${data.villagerName}: 오늘도 마을을 구경하고 계시네요!`,
+        `${data.villagerName}: 저기 예쁜 꽃이 피었어요!`,
+        `${data.villagerName}: 새로운 생물을 발견하셨나요?`,
+        `${data.villagerName}: 잠깐 이야기 나누실래요?`
+    ];
+
+    speechBubble.textContent =
+        greetings[Math.floor(Math.random() * greetings.length)];
+
+    speechBubble.style.display = "block";
+
+    dialogueCooldown = 8;
+
+    setMessage(
+        `${data.villagerName}이(가) 먼저 인사를 건넸어요.`
+    );
+}
+
+// 주민끼리 대화하는 행동
+function updateVillagerSocial(delta) {
+    npcChatCooldown -= delta;
+
+    if (npcChatCooldown > 0) return;
+
+    npcChatCooldown = 5 + Math.random() * 5;
+
+    if (villagers.length < 2) return;
+
+    const firstIndex =
+        Math.floor(Math.random() * villagers.length);
+
+    const first = villagers[firstIndex];
+
+    if (!first || first.userData.isGuide) return;
+
+    let second = null;
+
+    for (let i = 0; i < villagers.length; i++) {
+        const candidate = villagers[i];
+
+        if (
+            candidate !== first &&
+            candidate.position.distanceTo(first.position) < 5
+        ) {
+            second = candidate;
+            break;
+        }
+    }
+
+    if (!second) return;
+
+    const firstData = first.userData;
+    const secondData = second.userData;
+
+    firstData.chatting = true;
+    secondData.chatting = true;
+
+    const conversations = [
+        [
+            "오늘 날씨가 정말 좋네요!",
+            "맞아요. 산책하기 딱 좋은 날이에요."
+        ],
+        [
+            "요즘 숲에 새로운 생물이 보인대요.",
+            "정말요? 저도 한번 찾아보고 싶어요!"
+        ],
+        [
+            "마을 꽃밭이 더 예뻐진 것 같아요.",
+            "주민들이 함께 가꿔서 그런가 봐요."
+        ],
+        [
+            "오늘은 어디에 가 볼까요?",
+            "광장 주변을 구경해 보는 건 어때요?"
+        ],
+        [
+            "이웃들과 이야기하는 게 즐거워요.",
+            "저도요! 마을이 더 활기차지는 것 같아요."
+        ]
+    ];
+
+    const conversation =
+        conversations[
+            Math.floor(Math.random() * conversations.length)
+        ];
+
+    speechBubble.textContent =
+        `${firstData.villagerName}: ${conversation[0]}`;
+
+    speechBubble.style.display = "block";
+
+    window.setTimeout(() => {
+        if (!secondData.villager) return;
+
+        speechBubble.textContent =
+            `${secondData.villagerName}: ${conversation[1]}`;
+    }, 2200);
+
+    window.setTimeout(() => {
+        firstData.chatting = false;
+        secondData.chatting = false;
+
+        if (!currentTalkingVillager) {
+            speechBubble.style.display = "none";
+        }
+    }, 4500);
+}
+
+// 플레이어와 가까운 주민 찾기
+function updateNearbyVillager(delta) {
+    if (!isPlaying) return;
+
+    dialogueCooldown -= delta;
+
+    let closest = null;
+    let closestDistance = 4;
+
+    villagers.forEach((villager) => {
+        const dx = camera.position.x - villager.position.x;
+        const dz = camera.position.z - villager.position.z;
+
+        const distance = Math.sqrt(dx * dx + dz * dz);
+
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closest = villager;
+        }
+    });
+
+    nearbyVillager = closest;
+
+    if (currentTalkingVillager) {
+        interactionHint.style.display = "none";
+        return;
+    }
+
+    if (nearbyVillager) {
+        interactionHint.style.display = "block";
+
+        // 주민이 가끔 먼저 인사
+        if (dialogueCooldown <= 0 && Math.random() < 0.008) {
+            villagerGreeting(nearbyVillager);
+        }
+    } else {
+        interactionHint.style.display = "none";
+    }
+}
+
+// E 키로 가까운 주민과 대화
+function interactWithNearbyVillager() {
+    if (currentTalkingVillager) {
+        nextVillagerDialogue();
+        return;
+    }
+
+    if (nearbyVillager) {
+        startVillagerDialogue(nearbyVillager);
+    }
+}
+
+// 대화 중 키보드 입력
+window.addEventListener("keydown", (event) => {
+    if (!isPlaying) return;
+
+    if (event.key.toLowerCase() === "e") {
+        event.preventDefault();
+        interactWithNearbyVillager();
+    }
+
+    if (event.key === "Escape" && currentTalkingVillager) {
+        closeVillagerDialogue();
+    }
+});
 
 // ================================================
 // 환경 생성 및 정리
@@ -2144,10 +2874,29 @@ function clearWorld() {
         });
     }
 
-    interactable.length = 0;
-    animatedCreatures.length = 0;
-    scenery.length = 0;
-    coinObjects.length = 0;
+interactable.length = 0;
+animatedCreatures.length = 0;
+scenery.length = 0;
+coinObjects.length = 0;
+
+// 주민 목록 초기화
+villagers.length = 0;
+
+// 열려 있는 대화창 닫기
+currentTalkingVillager = null;
+nearbyVillager = null;
+
+if (dialoguePanel) {
+    dialoguePanel.style.display = "none";
+}
+
+if (interactionHint) {
+    interactionHint.style.display = "none";
+}
+
+if (speechBubble) {
+    speechBubble.style.display = "none";
+}
 }
 
 function rebuildEnvironment() {
@@ -2426,9 +3175,11 @@ window.addEventListener("mouseup", (event) => {
     if (hits.length > 0) {
         const owner = hits[0].object.userData.owner;
 
-        if (owner?.userData?.species) {
-            showSpeciesInfo(owner.userData.species);
-        }
+if (owner?.userData?.villager) {
+    startVillagerDialogue(owner);
+} else if (owner?.userData?.species) {
+    showSpeciesInfo(owner.userData.species);
+}
     }
 });
 
@@ -2553,6 +3304,87 @@ function updateCreatures(delta) {
 
         if (!data.species) return;
 
+        // 주민 전용 움직임과 걷기 애니메이션
+        if (data.villager) {
+            if (data.isGuide) {
+                // 숲 해설가는 안내 위치에서 천천히 움직임
+                data.targetX = data.baseX;
+                data.targetZ = data.baseZ;
+            } else {
+                // 일정 시간이 지나면 새로운 목적지 선택
+                data.changeTargetTime -= delta;
+
+                if (data.changeTargetTime <= 0) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * data.walkRadius;
+
+                    data.targetX =
+                        data.baseX + Math.cos(angle) * distance;
+
+                    data.targetZ =
+                        data.baseZ + Math.sin(angle) * distance;
+
+                    data.changeTargetTime = 3 + Math.random() * 5;
+                }
+            }
+
+            const dx = data.targetX - group.position.x;
+            const dz = data.targetZ - group.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+
+            const isWalking = distance > 0.15;
+
+            if (isWalking) {
+                const moveDistance = Math.min(
+                    distance,
+                    data.walkSpeed * delta
+                );
+
+                group.position.x +=
+                    (dx / distance) * moveDistance;
+
+                group.position.z +=
+                    (dz / distance) * moveDistance;
+
+                // 이동 방향으로 몸을 돌림
+                group.rotation.y = Math.atan2(dx, dz);
+
+                // 팔과 다리를 번갈아 움직임
+                const walkCycle =
+                    elapsed * data.walkSpeed * 5 + data.phase;
+
+                data.limbs.forEach((limb) => {
+                    limb.leg.rotation.x =
+                        Math.sin(walkCycle) * 0.65 * limb.side;
+
+                    limb.arm.rotation.x =
+                        -Math.sin(walkCycle) * 0.45 * limb.side;
+                });
+
+                // 걸을 때 몸이 살짝 위아래로 움직임
+                group.position.y =
+                    Math.abs(Math.sin(walkCycle * 2)) * 0.055;
+
+                // 머리의 자연스러운 움직임
+                data.head.rotation.z =
+                    Math.sin(elapsed * 1.5 + data.phase) * 0.035;
+            } else {
+                // 멈추면 팔과 다리를 원래 위치로 복귀
+                data.limbs.forEach((limb) => {
+                    limb.leg.rotation.x *= 0.85;
+                    limb.arm.rotation.x *= 0.85;
+                });
+
+                group.position.y = 0;
+
+                // 가만히 서 있을 때 고개 움직임
+                data.head.rotation.y =
+                    Math.sin(elapsed * 0.7 + data.phase) * 0.08;
+            }
+
+            return;
+        }
+
         // 식물은 제자리에서 살짝 흔들리도록 설정
         if (data.plant) {
             group.position.y = 0;
@@ -2563,12 +3395,11 @@ function updateCreatures(delta) {
             return;
         }
 
-        // 낮과 밤이 바뀌어도 생물이 사라지지 않도록 설정
         group.visible = true;
 
         const activity = data.species.activity;
 
-        // 새와 날아다니는 곤충은 공중에서 움직임
+        // 새와 날아다니는 곤충
         if (data.flying) {
             group.position.y =
                 1.4 +
@@ -2583,7 +3414,7 @@ function updateCreatures(delta) {
                 Math.cos(elapsed * 0.4 + data.phase) * 1.2;
         }
 
-        // 물고기는 물속에서 움직이는 것처럼 표현
+        // 물고기
         else if (data.swimming) {
             group.position.y =
                 0.25 +
@@ -2601,7 +3432,7 @@ function updateCreatures(delta) {
                 Math.sin(elapsed + data.phase) * 0.25;
         }
 
-        // 그 밖의 동물과 곤충은 지면 주변에서 움직임
+        // 지면에서 움직이는 생물
         else if (data.walking) {
             const speed = activity === "night" ? 0.22 : 0.12;
 
@@ -2619,7 +3450,7 @@ function updateCreatures(delta) {
             );
         }
 
-        // 날개가 있는 생물은 날개를 움직임
+        // 날개 움직임
         group.traverse((object) => {
             if (object.userData.wing) {
                 object.rotation.z =
@@ -2628,7 +3459,6 @@ function updateCreatures(delta) {
         });
     });
 }
-
 
 // ================================================
 // 낮과 밤
@@ -2737,6 +3567,8 @@ function animate() {
     updateMovement(delta);
     updateCreatures(delta);
 
+    updateNearbyVillager(delta);
+    updateVillagerSocial(delta);
     // 코인을 공중에서 천천히 회전시키기
     coinObjects.forEach((coin) => {
         if (coin.userData.collected) return;
