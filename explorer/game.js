@@ -2916,10 +2916,522 @@ function rebuildEnvironment() {
 
     groundMaterial.color.set(seasonColors[currentSeason].ground);
     groundMaterial.color.lerp(new THREE.Color(habitat.ground), 0.55);
-
+    
+// 광장, 상점, 꽃밭, 가로등 등 고급 마을 시설 추가
+makeVillageDetails();
+    
         // 마을 건물과 산책길 생성
     makeVillage();
 
+    // ================================================
+// BIOMAP 마을 고급 시설 추가
+// 광장, 상점, 꽃밭, 가로등, 장식물 생성
+// ================================================
+
+function makeVillageDetails() {
+    const details = new THREE.Group();
+
+    // --------------------------------
+    // 1. 마을 중앙 광장
+    // --------------------------------
+
+    const plaza = addMesh(
+        details,
+        new THREE.CylinderGeometry(7.5, 7.5, 0.18, 48),
+        makeMaterial("#cbb995"),
+        0, 0.04, -1
+    );
+
+    plaza.receiveShadow = true;
+
+    // 광장 중앙 원형 장식
+    addMesh(
+        details,
+        new THREE.CylinderGeometry(2.5, 2.5, 0.12, 32),
+        makeMaterial("#a9bd91"),
+        0, 0.16, -1
+    );
+
+    addMesh(
+        details,
+        new THREE.CylinderGeometry(1.4, 1.4, 0.14, 32),
+        makeMaterial("#e1d0a8"),
+        0, 0.27, -1
+    );
+
+    // 광장 중앙 꽃 장식
+    const centerFlower = new THREE.Group();
+
+    addMesh(
+        centerFlower,
+        new THREE.CylinderGeometry(0.25, 0.3, 0.7, 10),
+        makeMaterial("#6d8e4d"),
+        0, 0.55, 0
+    );
+
+    for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 * i) / 8;
+
+        const petal = addMesh(
+            centerFlower,
+            new THREE.SphereGeometry(0.32, 10, 8),
+            makeMaterial(
+                ["#e9a9b5", "#f0d17a", "#d9b4e8", "#ffffff"][i % 4]
+            ),
+            Math.cos(angle) * 0.55,
+            0.85,
+            Math.sin(angle) * 0.55
+        );
+
+        petal.scale.set(1.1, 0.55, 0.8);
+    }
+
+    addMesh(
+        centerFlower,
+        new THREE.SphereGeometry(0.3, 12, 10),
+        makeMaterial("#f3d36b"),
+        0, 0.88, 0
+    );
+
+    centerFlower.position.set(0, 0, -1);
+    details.add(centerFlower);
+
+    // --------------------------------
+    // 2. 광장 주변 돌길
+    // --------------------------------
+
+    for (let i = 0; i < 20; i++) {
+        const angle = (Math.PI * 2 * i) / 20;
+
+        const stone = addMesh(
+            details,
+            new THREE.BoxGeometry(1.1, 0.1, 0.65),
+            makeMaterial(i % 2 === 0 ? "#d7c8a8" : "#b9aa8b"),
+            Math.cos(angle) * 8.2,
+            0.08,
+            -1 + Math.sin(angle) * 8.2
+        );
+
+        stone.rotation.y = -angle;
+    }
+
+    // --------------------------------
+    // 3. 꽃밭 생성 함수
+    // --------------------------------
+
+    function addFlowerBed(x, z, width, depth) {
+        // 꽃밭 흙 바닥
+        addMesh(
+            details,
+            new THREE.BoxGeometry(width, 0.18, depth),
+            makeMaterial("#76563d"),
+            x, 0.1, z
+        );
+
+        // 꽃밭 테두리
+        const borderMaterial = makeMaterial("#a77b50");
+
+        addMesh(
+            details,
+            new THREE.BoxGeometry(width + 0.3, 0.25, 0.2),
+            borderMaterial,
+            x, 0.2, z - depth / 2
+        );
+
+        addMesh(
+            details,
+            new THREE.BoxGeometry(width + 0.3, 0.25, 0.2),
+            borderMaterial,
+            x, 0.2, z + depth / 2
+        );
+
+        addMesh(
+            details,
+            new THREE.BoxGeometry(0.2, 0.25, depth),
+            borderMaterial,
+            x - width / 2, 0.2, z
+        );
+
+        addMesh(
+            details,
+            new THREE.BoxGeometry(0.2, 0.25, depth),
+            borderMaterial,
+            x + width / 2, 0.2, z
+        );
+
+        // 꽃과 잎 배치
+        const flowerPalette = [
+            "#f1a7b7",
+            "#f4d16f",
+            "#d7b2e8",
+            "#ffffff",
+            "#e88b78"
+        ];
+
+        for (let i = 0; i < 18; i++) {
+            const flowerX =
+                x - width / 2 + 0.45 + Math.random() * (width - 0.9);
+
+            const flowerZ =
+                z - depth / 2 + 0.35 + Math.random() * (depth - 0.7);
+
+            // 줄기
+            addMesh(
+                details,
+                new THREE.CylinderGeometry(0.035, 0.05, 0.4, 6),
+                makeMaterial("#477c3e"),
+                flowerX, 0.4, flowerZ
+            );
+
+            // 꽃잎
+            for (let petalIndex = 0; petalIndex < 5; petalIndex++) {
+                const angle = (Math.PI * 2 * petalIndex) / 5;
+
+                addMesh(
+                    details,
+                    new THREE.SphereGeometry(0.12, 8, 6),
+                    makeMaterial(
+                        flowerPalette[i % flowerPalette.length]
+                    ),
+                    flowerX + Math.cos(angle) * 0.12,
+                    0.66,
+                    flowerZ + Math.sin(angle) * 0.12
+                );
+            }
+
+            // 꽃 중심
+            addMesh(
+                details,
+                new THREE.SphereGeometry(0.09, 8, 6),
+                makeMaterial("#f4d36b"),
+                flowerX, 0.67, flowerZ
+            );
+        }
+    }
+
+    // 광장 주변 꽃밭 4개
+    addFlowerBed(-10, -1, 4, 3);
+    addFlowerBed(10, -1, 4, 3);
+    addFlowerBed(-7, 9, 4, 3);
+    addFlowerBed(7, 9, 4, 3);
+
+    // --------------------------------
+    // 4. 마을 상점 생성 함수
+    // --------------------------------
+
+    function addShop(x, z, wallColor, roofColor, shopName) {
+        const shop = new THREE.Group();
+
+        // 상점 바닥
+        addMesh(
+            shop,
+            new THREE.BoxGeometry(7, 0.25, 5.5),
+            makeMaterial("#b79b73"),
+            0, 0.12, 0
+        );
+
+        // 상점 벽
+        addMesh(
+            shop,
+            new THREE.BoxGeometry(6.5, 3.2, 5),
+            makeMaterial(wallColor),
+            0, 1.8, 0
+        );
+
+        // 지붕
+        const shopRoof = addMesh(
+            shop,
+            new THREE.ConeGeometry(5, 2.5, 4),
+            makeMaterial(roofColor),
+            0, 4.6, 0
+        );
+
+        shopRoof.rotation.y = Math.PI / 4;
+
+        // 정면 간판
+        const sign = addMesh(
+            shop,
+            new THREE.BoxGeometry(3.4, 0.8, 0.16),
+            makeMaterial("#f0dfb5"),
+            0, 3.1, 2.58
+        );
+
+        // 상점 앞 차양
+        addMesh(
+            shop,
+            new THREE.BoxGeometry(7.2, 0.18, 1.2),
+            makeMaterial("#d8a56f"),
+            0, 2.65, 3
+        );
+
+        // 상점 기둥
+        for (const side of [-1, 1]) {
+            addMesh(
+                shop,
+                new THREE.BoxGeometry(0.18, 2.5, 0.18),
+                makeMaterial("#805638"),
+                side * 3.1, 1.35, 3.4
+            );
+        }
+
+        // 진열대
+        addMesh(
+            shop,
+            new THREE.BoxGeometry(4.8, 0.75, 1),
+            makeMaterial("#8c6240"),
+            0, 0.85, 3.5
+        );
+
+        // 진열 상품
+        for (let i = 0; i < 5; i++) {
+            addMesh(
+                shop,
+                new THREE.SphereGeometry(0.28, 10, 8),
+                makeMaterial(
+                    ["#d98a45", "#a6b95c", "#c75d50", "#e4c36c", "#8cae70"][i]
+                ),
+                -1.8 + i * 0.9,
+                1.4,
+                3.5
+            );
+        }
+
+        // 창문
+        for (const side of [-1, 1]) {
+            addMesh(
+                shop,
+                new THREE.BoxGeometry(1.1, 1.1, 0.12),
+                makeMaterial("#9bcbd1"),
+                side * 2.1, 2.1, 2.56
+            );
+        }
+
+        shop.position.set(x, 0, z);
+        details.add(shop);
+    }
+
+    // 씨앗과 농사 용품 상점
+    addShop(
+        -25,
+        -5,
+        "#e0c49b",
+        "#7d5940",
+        "씨앗 상점"
+    );
+
+    // 마을 생활용품 상점
+    addShop(
+        25,
+        -5,
+        "#c8d5a7",
+        "#66824d",
+        "생활용품 상점"
+    );
+
+    // --------------------------------
+    // 5. 가로등 생성 함수
+    // --------------------------------
+
+    function addStreetLamp(x, z) {
+        const lamp = new THREE.Group();
+
+        // 기둥
+        addMesh(
+            lamp,
+            new THREE.CylinderGeometry(0.09, 0.14, 3.5, 10),
+            makeMaterial("#594c3c"),
+            0, 1.75, 0
+        );
+
+        // 기둥 장식
+        addMesh(
+            lamp,
+            new THREE.CylinderGeometry(0.22, 0.22, 0.15, 10),
+            makeMaterial("#8c704c"),
+            0, 3.2, 0
+        );
+
+        // 등불
+        addMesh(
+            lamp,
+            new THREE.BoxGeometry(0.75, 0.75, 0.75),
+            makeMaterial("#f5dfa0"),
+            0, 3.65, 0
+        );
+
+        // 등불 지붕
+        addMesh(
+            lamp,
+            new THREE.ConeGeometry(0.65, 0.5, 4),
+            makeMaterial("#554635"),
+            0, 4.25, 0
+        );
+
+        // 등불 빛
+        const light = new THREE.PointLight("#ffe6a6", 1.2, 9);
+        light.position.set(0, 3.65, 0);
+        lamp.add(light);
+
+        lamp.position.set(x, 0, z);
+        details.add(lamp);
+    }
+
+    const lampPositions = [
+        [-9, -10],
+        [9, -10],
+        [-9, 7],
+        [9, 7],
+        [-18, -5],
+        [18, -5],
+        [-25, 5],
+        [25, 5],
+        [-5, 15],
+        [5, 15]
+    ];
+
+    lampPositions.forEach(([x, z]) => {
+        addStreetLamp(x, z);
+    });
+
+    // --------------------------------
+    // 6. 광장 주변 벤치
+    // --------------------------------
+
+    function addDetailedBench(x, z, rotation) {
+        const bench = new THREE.Group();
+
+        // 좌석
+        addMesh(
+            bench,
+            new THREE.BoxGeometry(2.5, 0.18, 0.75),
+            makeMaterial("#98633e"),
+            0, 0.8, 0
+        );
+
+        // 등받이
+        addMesh(
+            bench,
+            new THREE.BoxGeometry(2.5, 0.85, 0.16),
+            makeMaterial("#805334"),
+            0, 1.25, -0.3
+        );
+
+        // 다리
+        for (const side of [-1, 1]) {
+            addMesh(
+                bench,
+                new THREE.BoxGeometry(0.16, 0.75, 0.55),
+                makeMaterial("#68452e"),
+                side * 0.9, 0.4, 0
+            );
+        }
+
+        bench.position.set(x, 0, z);
+        bench.rotation.y = rotation;
+
+        details.add(bench);
+    }
+
+    addDetailedBench(-5, -10, 0);
+    addDetailedBench(5, -10, Math.PI);
+    addDetailedBench(-12, 3, Math.PI / 2);
+    addDetailedBench(12, 3, -Math.PI / 2);
+
+    // --------------------------------
+    // 7. 화분과 나무 장식
+    // --------------------------------
+
+    function addPottedPlant(x, z) {
+        const pot = new THREE.Group();
+
+        // 화분
+        addMesh(
+            pot,
+            new THREE.CylinderGeometry(0.4, 0.28, 0.55, 12),
+            makeMaterial("#b96f50"),
+            0, 0.28, 0
+        );
+
+        // 흙
+        addMesh(
+            pot,
+            new THREE.CylinderGeometry(0.32, 0.32, 0.08, 12),
+            makeMaterial("#5c4430"),
+            0, 0.57, 0
+        );
+
+        // 식물 줄기
+        addMesh(
+            pot,
+            new THREE.CylinderGeometry(0.06, 0.08, 1.1, 7),
+            makeMaterial("#477c3e"),
+            0, 1.1, 0
+        );
+
+        // 잎
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 * i) / 6;
+
+            const leaf = addMesh(
+                pot,
+                new THREE.SphereGeometry(0.35, 8, 6),
+                makeMaterial(i % 2 === 0 ? "#5c9b4e" : "#83ae5d"),
+                Math.cos(angle) * 0.35,
+                1.45,
+                Math.sin(angle) * 0.35
+            );
+
+            leaf.scale.set(1.1, 0.5, 0.65);
+        }
+
+        pot.position.set(x, 0, z);
+        details.add(pot);
+    }
+
+    addPottedPlant(-17, -10);
+    addPottedPlant(17, -10);
+    addPottedPlant(-17, 8);
+    addPottedPlant(17, 8);
+
+    // --------------------------------
+    // 8. 광장 주변 작은 표지판
+    // --------------------------------
+
+    function addSignpost(x, z) {
+        const sign = new THREE.Group();
+
+        addMesh(
+            sign,
+            new THREE.CylinderGeometry(0.08, 0.1, 2, 8),
+            makeMaterial("#765033"),
+            0, 1, 0
+        );
+
+        addMesh(
+            sign,
+            new THREE.BoxGeometry(2.2, 0.65, 0.16),
+            makeMaterial("#d5b77e"),
+            0, 1.7, 0
+        );
+
+        addMesh(
+            sign,
+            new THREE.BoxGeometry(0.16, 0.16, 0.2),
+            makeMaterial("#805334"),
+            0, 1.7, 0
+        );
+
+        sign.position.set(x, 0, z);
+        details.add(sign);
+    }
+
+    addSignpost(-14, -2);
+    addSignpost(14, -2);
+
+    // 모든 시설을 실제 월드에 추가
+    world.add(details);
+}
+    
     // 마을 주민과 숲 해설가 생성
     makeVillageNPCs();
     
