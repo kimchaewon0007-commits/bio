@@ -2922,6 +2922,7 @@ makeVillageDetails();
     
         // 마을 건물과 산책길 생성
     makeVillage();
+    createPlayerHome();
 
     // ================================================
 // BIOMAP 마을 고급 시설 추가
@@ -3543,6 +3544,255 @@ function makeVillageDetails() {
     updateQuestDisplay();
 }
 
+
+// ================================================
+// 플레이어 전용 집 시스템
+// ================================================
+
+let isInsidePlayerHome = false;
+
+let playerHome = null;
+let playerHomeInterior = null;
+let playerHomeExterior = null;
+
+const PLAYER_HOME_POSITION = new THREE.Vector3(0, 0, 35);
+
+// 집과 내부 공간 생성
+function createPlayerHome() {
+    playerHome = new THREE.Group();
+    playerHomeExterior = new THREE.Group();
+    playerHomeInterior = new THREE.Group();
+
+    // --------------------------------
+    // 집 외부
+    // --------------------------------
+
+    // 기초 바닥
+    addMesh(
+        playerHomeExterior,
+        new THREE.BoxGeometry(11, 0.5, 9),
+        makeMaterial("#8b765b"),
+        0, 0.25, 0
+    );
+
+    // 집 벽
+    addMesh(
+        playerHomeExterior,
+        new THREE.BoxGeometry(10, 4.5, 8),
+        makeMaterial("#e6d2aa"),
+        0, 2.5, 0
+    );
+
+    // 지붕
+    const roof = addMesh(
+        playerHomeExterior,
+        new THREE.ConeGeometry(7.5, 3.5, 4),
+        makeMaterial("#80513d"),
+        0, 6.4, 0
+    );
+
+    roof.rotation.y = Math.PI / 4;
+
+    // 현관문
+    addMesh(
+        playerHomeExterior,
+        new THREE.BoxGeometry(1.5, 2.8, 0.18),
+        makeMaterial("#70472f"),
+        0, 1.65, 4.08
+    );
+
+    // 문 손잡이
+    addMesh(
+        playerHomeExterior,
+        new THREE.SphereGeometry(0.09, 10, 8),
+        makeMaterial("#e5bd65"),
+        0.48, 1.7, 4.2
+    );
+
+    // 창문
+    for (const side of [-1, 1]) {
+        addMesh(
+            playerHomeExterior,
+            new THREE.BoxGeometry(1.7, 1.5, 0.15),
+            makeMaterial("#91c6cf"),
+            side * 3.1, 2.8, 4.08
+        );
+
+        addMesh(
+            playerHomeExterior,
+            new THREE.BoxGeometry(1.9, 0.13, 0.25),
+            makeMaterial("#80513d"),
+            side * 3.1, 2, 4.15
+        );
+    }
+
+    // 현관 계단
+    addMesh(
+        playerHomeExterior,
+        new THREE.BoxGeometry(2.5, 0.25, 1.2),
+        makeMaterial("#b6a184"),
+        0, 0.35, 4.6
+    );
+
+    // 집 이름 표지판
+    addMesh(
+        playerHomeExterior,
+        new THREE.BoxGeometry(3.2, 0.7, 0.15),
+        makeMaterial("#e8d5a9"),
+        0, 4.3, 4.12
+    );
+
+    // 굴뚝
+    addMesh(
+        playerHomeExterior,
+        new THREE.BoxGeometry(0.9, 2.2, 0.9),
+        makeMaterial("#a76f50"),
+        -3.3, 5.2, -1.8
+    );
+
+    // 외부 화분
+    for (const side of [-1, 1]) {
+        const pot = new THREE.Group();
+
+        addMesh(
+            pot,
+            new THREE.CylinderGeometry(0.35, 0.25, 0.55, 10),
+            makeMaterial("#b96f50"),
+            0, 0.28, 0
+        );
+
+        addMesh(
+            pot,
+            new THREE.SphereGeometry(0.5, 10, 8),
+            makeMaterial("#5d984d"),
+            0, 0.85, 0
+        );
+
+        pot.position.set(side * 2.2, 0, 4.9);
+        playerHomeExterior.add(pot);
+    }
+
+    // 집 앞 울타리
+    for (let i = -4; i <= 4; i++) {
+        if (Math.abs(i) <= 1) continue;
+
+        addMesh(
+            playerHomeExterior,
+            new THREE.BoxGeometry(0.15, 1, 0.15),
+            makeMaterial("#9a704b"),
+            i, 0.55, 6
+        );
+    }
+
+    addMesh(
+        playerHomeExterior,
+        new THREE.BoxGeometry(9, 0.15, 0.15),
+        makeMaterial("#9a704b"),
+        0, 0.9, 6
+    );
+
+    // --------------------------------
+    // 집 내부
+    // --------------------------------
+
+    // 바닥
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(9.5, 0.2, 7.5),
+        makeMaterial("#b8895e"),
+        0, 0.15, 0
+    );
+
+    // 뒤쪽 벽
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(9.5, 4, 0.2),
+        makeMaterial("#f0dfc5"),
+        0, 2.2, -3.7
+    );
+
+    // 왼쪽 벽
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(0.2, 4, 7.5),
+        makeMaterial("#e6d3b5"),
+        -4.7, 2.2, 0
+    );
+
+    // 오른쪽 벽
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(0.2, 4, 7.5),
+        makeMaterial("#e6d3b5"),
+        4.7, 2.2, 0
+    );
+
+    // 천장
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(9.5, 0.2, 7.5),
+        makeMaterial("#d8c5a8"),
+        0, 4.3, 0
+    );
+
+    // --------------------------------
+    // 침대
+    // --------------------------------
+
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(2.6, 0.5, 3.1),
+        makeMaterial("#80553e"),
+        -2.6, 0.55, -1.5
+    );
+
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(2.5, 0.35, 2.4),
+        makeMaterial("#f2e5d2"),
+        -2.6, 0.95, -1.5
+    );
+
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(2.5, 0.55, 0.8),
+        makeMaterial("#a9c6d0"),
+        -2.6, 1.2, -2.5
+    );
+
+    // 침대 베개
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(0.85, 0.2, 0.55),
+        makeMaterial("#fff4df"),
+        -2.6, 1.35, -2.55
+    );
+
+    // --------------------------------
+    // 소파
+    // --------------------------------
+
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(2.8, 0.65, 1.1),
+        makeMaterial("#789b79"),
+        2.2, 0.65, -2.4
+    );
+
+    addMesh(
+        playerHomeInterior,
+        new THREE.BoxGeometry(2.8, 1.1, 0.25),
+        makeMaterial("#668765"),
+        2.2, 1.15, -2.9
+    );
+
+    // 소파 팔걸이
+    for (const side of [-1, 1]) {
+        addMesh(
+            playerHomeInterior,
+            new THREE.BoxGeometry(0.3, 0.9, 1.1),
+            make
+            
 // ================================================
 // 생물 정보와 발견 기록
 // ================================================
@@ -3728,6 +3978,81 @@ window.addEventListener("blur", () => {
     isDragging = false;
 });
 
+        // ================================================
+// 플레이어 집 입장 및 퇴장
+// ================================================
+
+function handlePlayerHomeInteraction() {
+
+    if (!isPlaying) return;
+
+    const homeX = PLAYER_HOME_POSITION.x;
+    const homeZ = PLAYER_HOME_POSITION.z;
+
+    // 집 안에 있는 경우
+    if (isInsidePlayerHome) {
+
+        isInsidePlayerHome = false;
+
+        playerHomeExterior.visible = true;
+        playerHomeInterior.visible = false;
+
+        camera.position.set(
+            homeX,
+            1.7,
+            homeZ + 8
+        );
+
+        if (typeof setMessage === "function") {
+            setMessage("집 밖으로 나왔습니다.");
+        }
+
+        return;
+    }
+
+    // 집 현관과의 거리 확인
+    const doorX = homeX;
+    const doorZ = homeZ + 5.5;
+
+    const distance = Math.sqrt(
+        Math.pow(camera.position.x - doorX, 2) +
+        Math.pow(camera.position.z - doorZ, 2)
+    );
+
+    if (distance > 4) return;
+
+    // 집 안으로 이동
+    isInsidePlayerHome = true;
+
+    playerHomeExterior.visible = false;
+    playerHomeInterior.visible = true;
+
+    camera.position.set(
+        homeX,
+        1.7,
+        homeZ + 2.5
+    );
+
+    if (typeof setMessage === "function") {
+        setMessage("나만의 집에 들어왔습니다. E키를 누르면 밖으로 나갑니다.");
+    }
+}
+
+
+// ================================================
+// 집 입장 키 설정
+// ================================================
+
+window.addEventListener("keydown", function(event) {
+
+    if (event.repeat) return;
+
+    if (event.key.toLowerCase() !== "e") return;
+
+    handlePlayerHomeInteraction();
+
+});
+        
 function updateMovement(delta) {
     if (!isPlaying) return;
 
@@ -3753,9 +4078,37 @@ function updateMovement(delta) {
     }
 
     // 3000 크기의 탐험 공간에서 자유롭게 이동
-    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -1490, 1490);
-    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -1490, 1490);
-    camera.position.y = 1.7;
+if (isInsidePlayerHome) {
+
+    camera.position.x = THREE.MathUtils.clamp(
+        camera.position.x,
+        PLAYER_HOME_POSITION.x - 4.7,
+        PLAYER_HOME_POSITION.x + 4.7
+    );
+
+    camera.position.z = THREE.MathUtils.clamp(
+        camera.position.z,
+        PLAYER_HOME_POSITION.z - 3.7,
+        PLAYER_HOME_POSITION.z + 3.7
+    );
+
+} else {
+
+    camera.position.x = THREE.MathUtils.clamp(
+        camera.position.x,
+        -1490,
+        1490
+    );
+
+    camera.position.z = THREE.MathUtils.clamp(
+        camera.position.z,
+        -1490,
+        1490
+    );
+
+}
+
+camera.position.y = 1.7;
     
     collectNearbyCoins();
 }
