@@ -2923,6 +2923,7 @@ makeVillageDetails();
         // 마을 건물과 산책길 생성
     makeVillage();
     createPlayerHome();
+    createPersonalFarm();
 
     // ================================================
 // BIOMAP 마을 고급 시설 추가
@@ -3797,6 +3798,729 @@ function createPlayerHome() {
 // 생물 정보와 발견 기록
 // ================================================
 
+            
+// ================================================
+// 개인 농장 및 농사 시스템
+// ================================================
+
+// 농사 재고 불러오기
+let farmInventory = (() => {
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem("biomapFarmInventory") || "null"
+        );
+
+        return saved || {
+            seeds: {
+                carrot: 2,
+                potato: 0,
+                tomato: 0
+            },
+            fertilizer: 0,
+            crops: {
+                carrot: 0,
+                potato: 0,
+                tomato: 0
+            }
+        };
+    } catch (error) {
+        return {
+            seeds: {
+                carrot: 2,
+                potato: 0,
+                tomato: 0
+            },
+            fertilizer: 0,
+            crops: {
+                carrot: 0,
+                potato: 0,
+                tomato: 0
+            }
+        };
+    }
+})();
+
+let selectedCrop = "carrot";
+
+let personalFarm = null;
+let farmPlots = [];
+
+const FARM_GROWTH_TIME = 45000;
+
+const FARM_CROPS = {
+    carrot: {
+        name: "당근",
+        emoji: "🥕",
+        price: 12,
+        color: "#e98b35"
+    },
+    potato: {
+        name: "감자",
+        emoji: "🥔",
+        price: 15,
+        color: "#b58b55"
+    },
+    tomato: {
+        name: "토마토",
+        emoji: "🍅",
+        price: 18,
+        color: "#d94b3f"
+    }
+};
+
+
+// ================================================
+// 농사 재고 저장
+// ================================================
+
+function saveFarmInventory() {
+    localStorage.setItem(
+        "biomapFarmInventory",
+        JSON.stringify(farmInventory)
+    );
+}
+
+
+// ================================================
+// 농장 상태 저장
+// ================================================
+
+function saveFarmState() {
+    const data = farmPlots.map((plot) => ({
+        crop: plot.crop,
+        plantedAt: plot.plantedAt,
+        fertilized: plot.fertilized
+    }));
+
+    localStorage.setItem(
+        "biomapFarmPlots",
+        JSON.stringify(data)
+    );
+}
+
+
+// ================================================
+// 개인 농장 생성
+// ================================================
+
+function createPersonalFarm() {
+
+    personalFarm = new THREE.Group();
+    farmPlots = [];
+
+    let savedPlots = [];
+
+    try {
+        savedPlots = JSON.parse(
+            localStorage.getItem("biomapFarmPlots") || "[]"
+        );
+    } catch (error) {
+        savedPlots = [];
+    }
+
+    const farmX = PLAYER_HOME_POSITION.x;
+    const farmZ = PLAYER_HOME_POSITION.z + 15;
+
+    // 농장 바닥
+    addMesh(
+        personalFarm,
+        new THREE.BoxGeometry(17, 0.15, 11),
+        makeMaterial("#a98a5e"),
+        0, 0.05, 0
+    );
+
+    // 밭 6개 생성
+    for (let i = 0; i < 6; i++) {
+
+        const column = i % 3;
+        const row = Math.floor(i / 3);
+
+        const x = (column - 1) * 4.8;
+        const z = (row - 0.5) * 4.2;
+
+        const plotGroup = new THREE.Group();
+
+        plotGroup.position.set(
+            farmX + x,
+            0,
+            farmZ + z
+        );
+
+        // 흙
+        addMesh(
+            plotGroup,
+            new THREE.BoxGeometry(3.8, 0.25, 3.2),
+            makeMaterial("#704b30"),
+            0, 0.2, 0
+        );
+
+        // 밭 가장자리 나무 테두리
+        for (const side of [-1, 1]) {
+
+            addMesh(
+                plotGroup,
+                new THREE.BoxGeometry(4, 0.2, 0.15),
+                makeMaterial("#9b7147"),
+                0, 0.35, side * 1.65
+            );
+
+            addMesh(
+                plotGroup,
+                new THREE.BoxGeometry(0.15, 0.2, 3.3),
+                makeMaterial("#9b7147"),
+                side * 1.95, 0.35, 0
+            );
+        }
+
+        const saved = savedPlots[i] || {};
+
+        const plot = {
+            index: i,
+            x: farmX + x,
+            z: farmZ + z,
+            group: plotGroup,
+            crop: saved.crop || null,
+            plantedAt: saved.plantedAt || 0,
+            fertilized: saved.fertilized || false,
+            cropGroup: null,
+            stage: 0
+        };
+
+        farmPlots.push(plot);
+        personalFarm.add(plotGroup);
+    }
+
+    // 농장 울타리
+    for (let x = -8; x <= 8; x += 2) {
+
+        for (const side of [-1, 1]) {
+
+            addMesh(
+                personalFarm,
+                new THREE.BoxGeometry(0.18, 0.9, 0.18),
+                makeMaterial("#8a603b"),
+                x, 0.5, side * 5.5
+            );
+        }
+    }
+
+    addMesh(
+        personalFarm,
+        new THREE.BoxGeometry(16, 0.15, 0.15),
+        makeMaterial("#9a7047"),
+        0, 0.75, -5.5
+    );
+
+    addMesh(
+        personalFarm,
+        new THREE.BoxGeometry(16, 0.15, 0.15),
+        makeMaterial("#9a7047"),
+        0, 0.75, 5.5
+    );
+
+    // 작물 판매대
+    const market = new THREE.Group();
+
+    addMesh(
+        market,
+        new THREE.BoxGeometry(3.5, 1.5, 1.5),
+        makeMaterial("#98643e"),
+        0, 0.8, 0
+    );
+
+    addMesh(
+        market,
+        new THREE.BoxGeometry(4.2, 0.25, 2),
+        makeMaterial("#c68d54"),
+        0, 1.7, 0
+    );
+
+    market.add(makeLabel("작물 판매", 2.7));
+
+    market.position.set(
+        farmX + 10,
+        0,
+        farmZ
+    );
+
+    personalFarm.add(market);
+
+    personalFarm.userData.market = market;
+
+    world.add(personalFarm);
+
+    // 저장된 작물 다시 표시
+    farmPlots.forEach((plot) => {
+        updateFarmPlotVisual(plot);
+    });
+}
+
+
+// ================================================
+// 작물 성장 단계
+// ================================================
+
+function getCropStage(plot) {
+
+    if (!plot.crop) return 0;
+
+    const elapsedTime = Date.now() - plot.plantedAt;
+
+    const growthTime = plot.fertilized
+        ? FARM_GROWTH_TIME * 0.65
+        : FARM_GROWTH_TIME;
+
+    if (elapsedTime >= growthTime) return 3;
+    if (elapsedTime >= growthTime * 0.65) return 2;
+    if (elapsedTime >= growthTime * 0.3) return 1;
+
+    return 0;
+}
+
+
+// ================================================
+// 작물 3D 모형 생성
+// ================================================
+
+function updateFarmPlotVisual(plot) {
+
+    const stage = getCropStage(plot);
+
+    if (plot.stage === stage && plot.cropGroup) {
+        return;
+    }
+
+    if (plot.cropGroup) {
+        plot.group.remove(plot.cropGroup);
+
+        plot.cropGroup.traverse((object) => {
+            if (object.geometry) {
+                object.geometry.dispose();
+            }
+
+            if (object.material) {
+                const materials = Array.isArray(object.material)
+                    ? object.material
+                    : [object.material];
+
+                materials.forEach((material) => {
+                    material.dispose();
+                });
+            }
+        });
+    }
+
+    plot.cropGroup = null;
+    plot.stage = stage;
+
+    if (!plot.crop || stage === 0) return;
+
+    const cropGroup = new THREE.Group();
+
+    const size = stage === 1
+        ? 0.45
+        : stage === 2
+            ? 0.75
+            : 1;
+
+    const leafMaterial = makeMaterial("#438b42");
+
+    // 줄기
+    addMesh(
+        cropGroup,
+        new THREE.CylinderGeometry(
+            0.07 * size,
+            0.1 * size,
+            0.8 * size,
+            8
+        ),
+        leafMaterial,
+        0, 0.4 * size, 0
+    );
+
+    // 잎
+    for (let i = 0; i < 5; i++) {
+
+        const angle = i * Math.PI * 2 / 5;
+
+        const leaf = addMesh(
+            cropGroup,
+            new THREE.SphereGeometry(0.35 * size, 10, 8),
+            leafMaterial,
+            Math.cos(angle) * 0.3 * size,
+            0.65 * size,
+            Math.sin(angle) * 0.3 * size
+        );
+
+        leaf.scale.set(1, 0.35, 0.65);
+        leaf.rotation.y = -angle;
+    }
+
+    // 열매
+    if (stage >= 2) {
+
+        const cropColor = FARM_CROPS[plot.crop].color;
+
+        const fruitCount = stage === 3 ? 3 : 1;
+
+        for (let i = 0; i < fruitCount; i++) {
+
+            addMesh(
+                cropGroup,
+                new THREE.SphereGeometry(
+                    stage === 3 ? 0.25 : 0.18,
+                    12,
+                    10
+                ),
+                makeMaterial(cropColor),
+                (i - 1) * 0.35,
+                0.45 * size,
+                0.2
+            );
+        }
+    }
+
+    cropGroup.position.y = 0.45;
+    plot.group.add(cropGroup);
+
+    plot.cropGroup = cropGroup;
+}
+
+
+// ================================================
+// 작물 성장 업데이트
+// ================================================
+
+function updateFarm() {
+
+    farmPlots.forEach((plot) => {
+
+        if (!plot.crop) return;
+
+        const newStage = getCropStage(plot);
+
+        if (newStage !== plot.stage) {
+
+            updateFarmPlotVisual(plot);
+
+            if (newStage === 3) {
+                setMessage(
+                    `${FARM_CROPS[plot.crop].name}이(가) 다 자랐어요! E키로 수확하세요.`
+                );
+            }
+        }
+    });
+}
+
+
+// ================================================
+// 씨앗 구매
+// ================================================
+
+function buyFarmSeeds() {
+
+    const crop = FARM_CROPS[selectedCrop];
+
+    const price = 15;
+    const amount = 3;
+
+    if (coinBalance < price) {
+        setMessage("코인이 부족해요. 생물을 발견하거나 작물을 판매해 보세요.");
+        return;
+    }
+
+    addCoins(-price);
+
+    farmInventory.seeds[selectedCrop] += amount;
+
+    saveFarmInventory();
+
+    setMessage(
+        `${crop.name} 씨앗 ${amount}개를 구매했어요!`
+    );
+}
+
+
+// ================================================
+// 비료 구매
+// ================================================
+
+function buyFarmFertilizer() {
+
+    const price = 10;
+
+    if (coinBalance < price) {
+        setMessage("비료를 구매하기 위한 코인이 부족해요.");
+        return;
+    }
+
+    addCoins(-price);
+
+    farmInventory.fertilizer += 1;
+
+    saveFarmInventory();
+
+    setMessage("비료 1개를 구매했어요!");
+}
+
+
+// ================================================
+// 작물 심기 및 수확
+// ================================================
+
+function interactWithFarmPlot(plot) {
+
+    // 빈 밭이면 씨앗 심기
+    if (!plot.crop) {
+
+        if (farmInventory.seeds[selectedCrop] <= 0) {
+            setMessage("씨앗이 없어요. 씨앗 상점에서 구매하세요.");
+            return;
+        }
+
+        farmInventory.seeds[selectedCrop]--;
+
+        plot.crop = selectedCrop;
+        plot.plantedAt = Date.now();
+        plot.fertilized = false;
+        plot.stage = 0;
+
+        saveFarmInventory();
+        saveFarmState();
+
+        updateFarmPlotVisual(plot);
+
+        setMessage(
+            `${FARM_CROPS[selectedCrop].name}을(를) 심었어요!`
+        );
+
+        return;
+    }
+
+    // 다 자란 작물 수확
+    if (getCropStage(plot) >= 3) {
+
+        const crop = plot.crop;
+
+        farmInventory.crops[crop] += 2;
+
+        plot.crop = null;
+        plot.plantedAt = 0;
+        plot.fertilized = false;
+        plot.stage = 0;
+
+        saveFarmInventory();
+        saveFarmState();
+
+        updateFarmPlotVisual(plot);
+
+        setMessage(
+            `${FARM_CROPS[crop].name} 2개를 수확했어요!`
+        );
+
+        return;
+    }
+
+    const remaining = Math.max(
+        0,
+        Math.ceil(
+            (FARM_GROWTH_TIME -
+            (Date.now() - plot.plantedAt)) / 1000
+        )
+    );
+
+    setMessage(
+        `${FARM_CROPS[plot.crop].name}이(가) 자라고 있어요.`
+    );
+}
+
+
+// ================================================
+// 비료 사용
+// ================================================
+
+function fertilizeFarmPlot(plot) {
+
+    if (!plot.crop) {
+        setMessage("먼저 밭에 씨앗을 심어 주세요.");
+        return;
+    }
+
+    if (plot.fertilized) {
+        setMessage("이 작물에는 이미 비료를 사용했어요.");
+        return;
+    }
+
+    if (farmInventory.fertilizer <= 0) {
+        setMessage("비료가 없어요. 비료 상점에서 구매하세요.");
+        return;
+    }
+
+    farmInventory.fertilizer--;
+
+    plot.fertilized = true;
+
+    saveFarmInventory();
+    saveFarmState();
+
+    setMessage("비료를 사용했어요! 작물이 더 빨리 자라요.");
+}
+
+
+// ================================================
+// 작물 판매
+// ================================================
+
+function sellFarmCrops() {
+
+    let totalCoins = 0;
+    let soldCount = 0;
+
+    Object.keys(FARM_CROPS).forEach((crop) => {
+
+        const amount = farmInventory.crops[crop];
+
+        if (amount <= 0) return;
+
+        totalCoins += amount * FARM_CROPS[crop].price;
+        soldCount += amount;
+
+        farmInventory.crops[crop] = 0;
+    });
+
+    if (soldCount === 0) {
+        setMessage("판매할 작물이 없어요. 밭에서 작물을 수확해 주세요.");
+        return;
+    }
+
+    addCoins(totalCoins);
+
+    saveFarmInventory();
+
+    setMessage(
+        `작물 ${soldCount}개를 판매했어요! 코인 ${totalCoins}개를 얻었어요.`
+    );
+}
+
+
+// ================================================
+// 농장 근처 상호작용
+// ================================================
+
+function handleFarmInteraction(event) {
+
+    if (!isPlaying) return;
+    if (event.repeat) return;
+
+    const key = event.key.toLowerCase();
+
+    // 작물 선택
+    if (key === "1") {
+        selectedCrop = "carrot";
+        setMessage("당근 씨앗을 선택했어요.");
+        return;
+    }
+
+    if (key === "2") {
+        selectedCrop = "potato";
+        setMessage("감자 씨앗을 선택했어요.");
+        return;
+    }
+
+    if (key === "3") {
+        selectedCrop = "tomato";
+        setMessage("토마토 씨앗을 선택했어요.");
+        return;
+    }
+
+    const playerX = camera.position.x;
+    const playerZ = camera.position.z;
+
+    // 씨앗 상점 근처에서 B키
+    if (key === "b") {
+
+        const distance = Math.hypot(
+            playerX - (-25),
+            playerZ - (-5)
+        );
+
+        if (distance < 7) {
+            buyFarmSeeds();
+        }
+
+        return;
+    }
+
+    // 비료 상점 근처에서 N키
+    if (key === "n") {
+
+        const distance = Math.hypot(
+            playerX - 25,
+            playerZ - (-5)
+        );
+
+        if (distance < 7) {
+            buyFarmFertilizer();
+        }
+
+        return;
+    }
+
+    if (key !== "e" && key !== "g") return;
+
+    // 농장 밭과의 거리 확인
+    let nearestPlot = null;
+    let nearestDistance = Infinity;
+
+    farmPlots.forEach((plot) => {
+
+        const distance = Math.hypot(
+            playerX - plot.x,
+            playerZ - plot.z
+        );
+
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestPlot = plot;
+        }
+    });
+
+    if (nearestPlot && nearestDistance < 3) {
+
+        if (key === "e") {
+            interactWithFarmPlot(nearestPlot);
+        } else {
+            fertilizeFarmPlot(nearestPlot);
+        }
+
+        return;
+    }
+
+    // 작물 판매대 근처에서 E키
+    if (key === "e" && personalFarm) {
+
+        const market = personalFarm.userData.market;
+
+        if (market) {
+
+            const distance = Math.hypot(
+                playerX - market.position.x,
+                playerZ - market.position.z
+            );
+
+            if (distance < 4) {
+                sellFarmCrops();
+            }
+        }
+    }
+}
+
+window.addEventListener(
+    "keydown",
+    handleFarmInteraction
+);
+
+        
 function showSpeciesInfo(species) {
     if (!species) return;
 
@@ -4431,6 +5155,7 @@ function animate() {
 
     updateMovement(delta);
     updateCreatures(delta);
+    updateFarm();
 
     updateNearbyVillager(delta);
     updateVillagerSocial(delta);
