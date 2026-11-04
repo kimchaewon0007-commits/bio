@@ -3878,8 +3878,72 @@ function saveFarmInventory() {
         "biomapFarmInventory",
         JSON.stringify(farmInventory)
     );
-}
 
+    updateFarmInventoryDisplay();
+}
+        // ================================================
+// 농사 인벤토리 화면
+// ================================================
+
+function updateFarmInventoryDisplay() {
+
+    let panel = document.getElementById("farm-inventory-panel");
+
+    if (!panel) {
+
+        panel = document.createElement("div");
+        panel.id = "farm-inventory-panel";
+
+        Object.assign(panel.style, {
+            position: "fixed",
+            top: "100px",
+            right: "20px",
+            width: "220px",
+            padding: "16px",
+            background: "rgba(24, 53, 37, 0.92)",
+            color: "#ffffff",
+            border: "2px solid #a6c98b",
+            borderRadius: "14px",
+            zIndex: "1000",
+            fontFamily: "sans-serif",
+            lineHeight: "1.8",
+            fontSize: "14px",
+            boxShadow: "0 5px 18px rgba(0,0,0,0.25)"
+        });
+
+        document.body.appendChild(panel);
+    }
+
+    panel.innerHTML = `
+        <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">
+            🎒 농사 인벤토리
+        </div>
+
+        <div style="color:#c8e6b5;font-weight:bold;">
+            🌱 씨앗
+        </div>
+
+        <div>🥕 당근: ${farmInventory.seeds.carrot}개</div>
+        <div>🥔 감자: ${farmInventory.seeds.potato}개</div>
+        <div>🍅 토마토: ${farmInventory.seeds.tomato}개</div>
+
+        <div style="color:#c8e6b5;font-weight:bold;margin-top:8px;">
+            🌿 재료
+        </div>
+
+        <div>🧪 비료: ${farmInventory.fertilizer}개</div>
+
+        <div style="color:#c8e6b5;font-weight:bold;margin-top:8px;">
+            🧺 수확물
+        </div>
+
+        <div>🥕 당근: ${farmInventory.crops.carrot}개</div>
+        <div>🥔 감자: ${farmInventory.crops.potato}개</div>
+        <div>🍅 토마토: ${farmInventory.crops.tomato}개</div>
+    `;
+}
+       
+// 재고 저장 후 화면 갱신
 
 // ================================================
 // 농장 상태 저장
@@ -3920,7 +3984,7 @@ function createPersonalFarm() {
 
     const farmX = PLAYER_HOME_POSITION.x;
     const farmZ = PLAYER_HOME_POSITION.z + 15;
-
+    personalFarm.position.set(farmX, 0, farmZ);
     // 농장 바닥
     addMesh(
         personalFarm,
@@ -3939,13 +4003,12 @@ function createPersonalFarm() {
         const z = (row - 0.5) * 4.2;
 
         const plotGroup = new THREE.Group();
-
-        plotGroup.position.set(
-            farmX + x,
-            0,
-            farmZ + z
-        );
-
+        
+    plotGroup.position.set(
+        x,
+        0,
+        z
+    );
         // 흙
         addMesh(
             plotGroup,
@@ -4038,9 +4101,9 @@ function createPersonalFarm() {
     market.add(makeLabel("작물 판매", 2.7));
 
     market.position.set(
-        farmX + 10,
+        10,
         0,
-        farmZ
+        0
     );
 
     personalFarm.add(market);
@@ -4048,6 +4111,7 @@ function createPersonalFarm() {
     personalFarm.userData.market = market;
 
     world.add(personalFarm);
+    updateFarmInventoryDisplay();
 
     // 저장된 작물 다시 표시
     farmPlots.forEach((plot) => {
