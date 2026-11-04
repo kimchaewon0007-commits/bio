@@ -3841,6 +3841,8 @@ let farmInventory = (() => {
 })();
 
 let selectedCrop = "carrot";
+let farmShopPanel = null;
+let isFarmShopOpen = false;
 
 let personalFarm = null;
 let farmPlots = [];
@@ -4327,6 +4329,145 @@ function buyFarmFertilizer() {
     setMessage("비료 1개를 구매했어요!");
 }
 
+        function createFarmShopUI() {
+    if (farmShopPanel) return;
+
+    farmShopPanel = document.createElement("div");
+
+    farmShopPanel.id = "farm-shop-panel";
+
+    farmShopPanel.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 360px;
+        padding: 24px;
+        background: linear-gradient(145deg, #f0f8e9, #dcefd0);
+        border: 3px solid #6b9b61;
+        border-radius: 20px;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.35);
+        z-index: 10000;
+        display: none;
+        color: #294b2c;
+        font-family: sans-serif;
+    `;
+
+    farmShopPanel.innerHTML = `
+        <h2 style="text-align:center; margin-top:0;">
+            🌱 농작물 상점
+        </h2>
+
+        <p id="farm-shop-coins"
+           style="text-align:center; font-weight:bold;">
+        </p>
+
+        <h3>🌾 씨앗 구매</h3>
+
+        <button id="buy-carrot"
+            style="width:100%; padding:10px; margin:4px 0;">
+            🥕 당근 씨앗 구매
+        </button>
+
+        <button id="buy-potato"
+            style="width:100%; padding:10px; margin:4px 0;">
+            🥔 감자 씨앗 구매
+        </button>
+
+        <button id="buy-tomato"
+            style="width:100%; padding:10px; margin:4px 0;">
+            🍅 토마토 씨앗 구매
+        </button>
+
+        <h3>🧪 농사 재료</h3>
+
+        <button id="buy-fertilizer"
+            style="width:100%; padding:10px; margin:4px 0;">
+            비료 구매
+        </button>
+
+        <button id="close-farm-shop"
+            style="
+                width:100%;
+                padding:11px;
+                margin-top:16px;
+                background:#6b9b61;
+                color:white;
+                border:none;
+                border-radius:8px;
+                font-weight:bold;
+            ">
+            상점 닫기
+        </button>
+    `;
+
+    document.body.appendChild(farmShopPanel);
+
+    document.getElementById("buy-carrot").addEventListener("click", () => {
+        selectedCrop = "carrot";
+        buyFarmSeeds();
+        updateFarmShopCoinDisplay();
+    });
+
+    document.getElementById("buy-potato").addEventListener("click", () => {
+        selectedCrop = "potato";
+        buyFarmSeeds();
+        updateFarmShopCoinDisplay();
+    });
+
+    document.getElementById("buy-tomato").addEventListener("click", () => {
+        selectedCrop = "tomato";
+        buyFarmSeeds();
+        updateFarmShopCoinDisplay();
+    });
+
+    document.getElementById("buy-fertilizer").addEventListener("click", () => {
+        buyFarmFertilizer();
+        updateFarmShopCoinDisplay();
+    });
+
+    document.getElementById("close-farm-shop").addEventListener("click", () => {
+        closeFarmShop();
+    });
+}
+
+function updateFarmShopCoinDisplay() {
+    const coinText = document.getElementById("farm-shop-coins");
+
+    if (coinText) {
+        coinText.textContent = `보유 코인: ${coinBalance} 코인`;
+    }
+}
+
+function openFarmShop() {
+    createFarmShopUI();
+
+    farmShopPanel.style.display = "block";
+    isFarmShopOpen = true;
+
+    updateFarmShopCoinDisplay();
+}
+
+function closeFarmShop() {
+    if (!farmShopPanel) return;
+
+    farmShopPanel.style.display = "none";
+    isFarmShopOpen = false;
+}
+
+        window.addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() === "o" && isPlaying) {
+        if (isFarmShopOpen) {
+            closeFarmShop();
+        } else {
+            openFarmShop();
+        }
+    }
+
+    if (event.key === "Escape" && isFarmShopOpen) {
+        closeFarmShop();
+    }
+});
 
 // ================================================
 // 작물 심기 및 수확
