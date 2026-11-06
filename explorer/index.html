@@ -81,5 +81,44 @@
     </div>
 
     <script type="module" src="./game.js"></script>
+    <script>
+    function showGameError(message) {
+        let errorBox = document.getElementById("game-error-box");
+
+        if (!errorBox) {
+            errorBox = document.createElement("div");
+            errorBox.id = "game-error-box";
+
+            errorBox.style.position = "fixed";
+            errorBox.style.left = "20px";
+            errorBox.style.right = "20px";
+            errorBox.style.bottom = "20px";
+            errorBox.style.zIndex = "999999";
+            errorBox.style.padding = "20px";
+            errorBox.style.background = "#fff0f0";
+            errorBox.style.color = "#b00020";
+            errorBox.style.border = "2px solid #b00020";
+            errorBox.style.borderRadius = "10px";
+            errorBox.style.whiteSpace = "pre-wrap";
+            errorBox.style.fontSize = "14px";
+
+            document.body.appendChild(errorBox);
+        }
+
+        errorBox.textContent = "게임 실행 오류:\n" + message;
+    }
+
+    window.addEventListener("error", function(event) {
+        showGameError(
+            event.message +
+            "\n파일: " + event.filename +
+            "\n줄 번호: " + event.lineno
+        );
+    });
+
+    window.addEventListener("unhandledrejection", function(event) {
+        showGameError(String(event.reason));
+    });
+</script>
 </body>
 </html>
