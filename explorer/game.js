@@ -5341,6 +5341,33 @@ if (startButton) {
     console.error("BIOMAP 오류: index.html에서 id가 start-button인 버튼을 찾지 못했습니다.");
 }
 
+    // ================================================
+// 게임 시작 버튼 오류 확인
+// ================================================
+
+window.addEventListener("error", (event) => {
+    console.error(
+        "게임 실행 오류:",
+        event.message,
+        event.filename,
+        event.lineno
+    );
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+    console.error(
+        "게임 비동기 실행 오류:",
+        event.reason
+    );
+});
+
+console.log("BIOMAP: 시작 버튼 코드까지 정상 실행됨");
+console.log("startButton:", startButton);
+console.log("introPanel:", introPanel);
+console.log("renderer:", renderer);
+console.log("camera:", camera);
+console.log("scene:", scene);
+
 // ================================================
 // 화면 크기 조정
 // ================================================
