@@ -4245,8 +4245,7 @@ function updateFarmPlotVisual(plot) {
     if (stage >= 2) {
 
         const cropColor = FARM_CROPS[plot.crop].color;
-
-        const fruitCount = stage === 3 ? 3 : 1;
+    const cropColor = FARM_CROPS[plot.crop]["color"];
 
         for (let i = 0; i < fruitCount; i++) {
 
