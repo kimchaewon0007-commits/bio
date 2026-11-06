@@ -3788,16 +3788,16 @@ function createPlayerHome() {
     );
 
     // 소파 팔걸이
-   for (const side of [-1, 1]) {
-       addMesh(
-          playerHomeInterior,
-          new THREE.BoxGeometry(0.3, 0.9, 1.1),
-          makeMaterial("#668765"),
-         2.2 + side * 1.25,
-         1.0,
-           -2.4
-    );
-}\
+    for (const side of [-1, 1]) {
+        addMesh(
+            playerHomeInterior,
+            new THREE.BoxGeometry(0.3, 0.9, 1.1),
+            makeMaterial("#668765"),
+            2.2 + side * 1.25,
+            1.0,
+            -2.4
+        );
+    }
 
     // 집 외부와 내부를 플레이어 집에 연결
     playerHome.add(playerHomeExterior);
@@ -4245,7 +4245,8 @@ function updateFarmPlotVisual(plot) {
     if (stage >= 2) {
 
         const cropColor = FARM_CROPS[plot.crop].color;
-    const cropColor = FARM_CROPS[plot.crop]["color"];
+
+        const fruitCount = stage === 3 ? 3 : 1;
 
         for (let i = 0; i < fruitCount; i++) {
 
@@ -4726,9 +4727,15 @@ function handleFarmInteraction(event) {
 
         if (market) {
 
+            const marketWorldX =
+                personalFarm.position.x + market.position.x;
+
+            const marketWorldZ =
+                personalFarm.position.z + market.position.z;
+
             const distance = Math.hypot(
-                playerX - market.position.x,
-                playerZ - market.position.z
+                playerX - marketWorldX,
+                playerZ - marketWorldZ
             );
 
             if (distance < 4) {
@@ -4736,7 +4743,6 @@ function handleFarmInteraction(event) {
             }
         }
     }
-}
 
 window.addEventListener(
     "keydown",
