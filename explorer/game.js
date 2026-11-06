@@ -4743,6 +4743,7 @@ function handleFarmInteraction(event) {
             }
         }
     }
+}
 
 window.addEventListener(
     "keydown",
