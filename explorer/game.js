@@ -3797,6 +3797,20 @@ function createPlayerHome() {
          1.0,
            -2.4
     );
+}\
+
+    // 집 외부와 내부를 플레이어 집에 연결
+    playerHome.add(playerHomeExterior);
+    playerHome.add(playerHomeInterior);
+
+    // 집을 지정된 위치에 배치
+    playerHome.position.copy(PLAYER_HOME_POSITION);
+
+    // 처음에는 집 내부를 보이지 않게 설정
+    playerHomeInterior.visible = false;
+
+    // 월드에 플레이어 집 추가
+    world.add(playerHome);
 }
             
 // ================================================
