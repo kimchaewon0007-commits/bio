@@ -3788,11 +3788,16 @@ function createPlayerHome() {
     );
 
     // 소파 팔걸이
-    for (const side of [-1, 1]) {
-        addMesh(
-            playerHomeInterior,
-            new THREE.BoxGeometry(0.3, 0.9, 1.1),
-            make
+   for (const side of [-1, 1]) {
+       addMesh(
+          playerHomeInterior,
+          new THREE.BoxGeometry(0.3, 0.9, 1.1),
+          makeMaterial("#668765"),
+         2.2 + side * 1.25,
+         1.0,
+           -2.4
+    );
+}
             
 // ================================================
 // 생물 정보와 발견 기록
